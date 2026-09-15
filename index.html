@@ -446,7 +446,7 @@ async function ghPutFile(path,text,sha){
   var d=await r.json(); return d.content&&d.content.sha;
 }
 function limpio(o){var c=JSON.parse(JSON.stringify(o));delete c._d;delete c._sha;return c}
-async function ghSync(){
+async function ghSync(force){
   if(!ghOn()){flash("Falta configurar el repositorio en la pantalla de proyectos.");return}
   if(S.busy)return; S.busy=true;
   var subidos=0,bajados=0,fallos=0,tree,err="";
@@ -456,7 +456,7 @@ async function ghSync(){
   }catch(e){ S.busy=false; paintSync(); flash(e.message); return }
 
   /* subir lo propio */
-  var items=[].concat(
+  var items=force?[]:[].concat(
     S.proyectos.filter(function(x){return x._d}).map(function(x){return["proyectos",x]}),
     S.sedes.filter(function(x){return x._d}).map(function(x){return["sedes",x]}),
     S.fichas.filter(function(x){return x._d}).map(function(x){return["fichas",x]}));
@@ -477,6 +477,7 @@ async function ghSync(){
   S.fichas.forEach(function(x){mios[ghPath("fichas",x)]=x});
   var pend=Object.keys(tree).filter(function(pa){
     if(pa.indexOf(ghRoot()+"/")!==0||!/\.json$/.test(pa))return false;
+    if(force)return true;
     var m=mios[pa]; return !m || m._sha!==tree[pa];
   });
   for(var j=0;j<pend.length;j++){
@@ -488,7 +489,7 @@ async function ghSync(){
       o2._d=false; o2._sha=tree[pa2];
       var arr=S[kind2],k=arr.map(function(x){return x.id}).indexOf(o2.id);
       var mine=k>=0?arr[k]:null;
-      if(!mine||(o2.ts||"")>=(mine.ts||"")){ if(k>=0)arr[k]=o2; else arr.push(o2); put(kind2,o2); bajados++ }
+      if(force||!mine||(o2.ts||"")>=(mine.ts||"")){ if(k>=0)arr[k]=o2; else arr.push(o2); put(kind2,o2); bajados++ }
       else if(mine){ mine._sha=tree[pa2]; put(kind2,mine) }
     }catch(e){fallos++; if(!err)err=e.message}
     await sleep(70);
@@ -612,7 +613,9 @@ function viewProyectos(a,ab){
     '<input type="text" id="ghToken" class="mono" value="'+esc(S.gh.token)+'" placeholder="github_pat_..." autocomplete="off" spellcheck="false"></div>'+
     '<div class="tools"><button class="btn small" id="bGhSave">Guardar configuración</button>'+
     '<button class="btn small ghost" id="bGhTest">Probar conexión</button>'+
-    '<button class="btn small ghost" id="bGhSync">Sincronizar ahora</button></div>'+
+    '<button class="btn small ghost" id="bGhSync">Sincronizar ahora</button>'+
+    '<button class="btn small ghost" id="bGhPull">Traer todo del repositorio</button></div>'+
+    '<p class="hint" style="margin:11px 0 0">«Traer todo» descarga el repositorio completo y sobrescribe lo que haya en este equipo. Es la opción del coordinador al consolidar en el computador. No la uses en un celular que tenga fichas sin subir.</p>'+
     '</div></section></div>';
   a.innerHTML=h;
   $("usuario").addEventListener("change",function(){S.usuario=this.value;mset("usuario",this.value)});
@@ -636,7 +639,13 @@ function viewProyectos(a,ab){
     if(!ghOn()){flash("Completa usuario, repositorio y token.");return}
     mset("gh",S.gh); ghProbar();
   };
-  $("bGhSync").onclick=function(){ if(!ghOn()){flash("Guarda primero la configuración.");return} ghSync() };
+  $("bGhSync").onclick=function(){ if(!ghOn()){flash("Guarda primero la configuración.");return} ghSync(false) };
+  $("bGhPull").onclick=function(){
+    if(!ghOn()){flash("Guarda primero la configuración.");return}
+    var p=S.proyectos.concat(S.sedes,S.fichas).filter(function(x){return x._d}).length;
+    if(p&&!confirm("Este equipo tiene "+p+" cambios sin subir que se van a perder. ¿Continuar de todos modos?"))return;
+    ghSync(true);
+  };
   $("abar").classList.remove("hide");
   ab.innerHTML='<button class="btn primary" id="bNewP">Nuevo proyecto</button>';
   $("bNewP").onclick=newProyecto;
@@ -647,7 +656,7 @@ function newProyecto(){
   var cl=prompt("Cliente o contratante")||"";
   var p={id:uid("p"),codigo:c.toUpperCase().trim(),nombre:n.trim(),cliente:cl.trim(),
     contratistas:"IACON S.A.S. — TERRAM Consultoría y Construcción S.A.S.",
-    creado:new Date().toISOString(),ts:new Date().toISOString(),_d:true};
+    creado:new Date().toISOString(),ts:"2000-01-01T00:00:00.000Z",_d:false};
   S.proyectos.push(p); put("proyectos",p); go({v:"proyecto",pid:p.id});
 }
 
@@ -1374,7 +1383,7 @@ function semilla(){
     ["s_adm","Sede Administrativa Circunvalar","ADM","Av. Circunvalar #3-01","Tipo 1 — Reconocimiento detallado"],
     ["s_cap","Capilla — Sede Antiguo Colegio La Enseñanza","CAP","Av. Circunvalar #1-57","Tipo 1 — Reconocimiento detallado"]
   ].map(function(r){return {id:r[0],proyectoId:p.id,nombre:r[1],codigo:r[2],direccion:r[3],tipoEval:r[4],
-    estructura:{},plano:null,next:1,ts:new Date().toISOString(),_d:true}});
+    estructura:{},plano:null,next:1,ts:"2000-01-01T00:00:00.000Z",_d:false}});
   S.proyectos.push(p); put("proyectos",p);
   ss.forEach(function(s){S.sedes.push(s);put("sedes",s)});
 }
