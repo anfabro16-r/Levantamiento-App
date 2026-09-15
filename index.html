@@ -255,6 +255,7 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:3px solid r
 <input type="file" id="fPhoto" accept="image/*" capture="environment" multiple class="sr">
 <input type="file" id="fPlano" accept="image/*" class="sr">
 <input type="file" id="fImport" accept="application/json" class="sr">
+<input type="file" id="fLogo" accept="image/*" class="sr">
 
 <script>
 (function(){
@@ -292,7 +293,14 @@ var C={
  patologia:["Humedad o filtración","Eflorescencia","Corrosión del refuerzo","Carbonatación aparente",
    "Hormigueros o segregación","Recubrimiento insuficiente","Desgaste superficial","Ataque biológico"],
  ensayos:["Núcleo de concreto","Esclerometría","Ultrasonido","Carbonatación","Regata de inspección","Pachómetro","Apique a cimentación"],
- tipoEval:["","Tipo 1 — Reconocimiento detallado","Tipo 2 — Vulnerabilidad y patología estructural"]
+ tipoEval:["","Tipo 1 — Reconocimiento detallado","Tipo 2 — Vulnerabilidad y patología estructural"],
+ claseEl:["Estructural","No estructural"],
+ tipoElEst:["","Columna","Viga","Nudo viga-columna","Muro estructural","Losa o entrepiso","Escalera","Cubierta estructural","Cimentación","Muro de contención","Diafragma"],
+ tipoElNoEst:["","Muro divisorio en mampostería","Fachada o antepecho","Cielo raso","Enchape o baldosa","Revoque o pañete","Ventanería o vidrio","Puerta","Instalación suspendida","Ducto o instalación técnica","Cubierta liviana","Tanque o equipo","Mobiliario fijo","Elemento ornamental"],
+ danoEst:["Fisura","Grieta pasante","Desprendimiento de recubrimiento","Aplastamiento del concreto","Pandeo del refuerzo","Acero de refuerzo expuesto","Corrosión del refuerzo","Desplome o inclinación","Desplazamiento de junta","Asentamiento diferencial","Rótula plástica visible","Falla en el nudo","Colapso parcial","Sin daño aparente"],
+ danoNoEst:["Fisura","Grieta pasante","Desprendimiento parcial","Desprendimiento total","Caída de elementos","Desplome o inclinación","Separación de la estructura","Rotura de vidrio","Pandeo o abombamiento","Fijación o anclaje suelto","Colapso","Sin daño aparente"],
+ patronEst:["Diagonal — cortante","En X — cortante cíclico","Horizontal — flexión","Horizontal — deslizamiento","Vertical — compresión","Concentrado en el nudo","En esquina de vano","Mapeo o retracción","Sobre junta constructiva","Interfaz muro-pórtico"],
+ patronNoEst:["Diagonal","Horizontal","Vertical","En esquina de vano","Perimetral por separación","Mapeo o retracción","En la fijación o anclaje","No aplica"]
 };
 
 /* ========== estado ========== */
@@ -695,15 +703,32 @@ function viewProyecto(a,ab){
   h+='<section><h2>Datos del contrato</h2><div class="body">'+
     '<div class="field"><label for="pCliente">Contratante</label><input type="text" id="pCliente" value="'+esc(p.cliente)+'"></div>'+
     '<div class="field"><label for="pContr">Contratistas</label><input type="text" id="pContr" value="'+esc(p.contratistas)+'"></div>'+
-    '<div class="field" style="margin-bottom:0"><label for="pNotas">Notas</label><textarea id="pNotas">'+esc(p.notas||"")+'</textarea></div>'+
+    '<div class="field"><label for="pNotas">Notas</label><textarea id="pNotas">'+esc(p.notas||"")+'</textarea></div>'+
+    '<div class="field" style="margin-bottom:0"><label>Logotipos del encabezado</label>'+
+    '<p class="hint">Aparecen arriba en cada página impresa: cédulas, resúmenes y consolidado.</p>'+
+    '<div class="row"><div>'+
+      (p.logoIzq?'<img src="'+p.logoIzq+'" style="max-height:52px;max-width:100%;display:block;margin-bottom:7px">':'')+
+      '<button class="btn small ghost block" id="bLogoI" type="button">'+(p.logoIzq?"Cambiar izquierdo":"Cargar logo izquierdo")+'</button>'+
+      (p.logoIzq?'<button class="btn small danger block" id="bLogoIX" type="button" style="margin-top:6px">Quitar</button>':'')+
+    '</div><div>'+
+      (p.logoDer?'<img src="'+p.logoDer+'" style="max-height:52px;max-width:100%;display:block;margin-bottom:7px">':'')+
+      '<button class="btn small ghost block" id="bLogoD" type="button">'+(p.logoDer?"Cambiar derecho":"Cargar logo derecho")+'</button>'+
+      (p.logoDer?'<button class="btn small danger block" id="bLogoDX" type="button" style="margin-top:6px">Quitar</button>':'')+
+    '</div></div></div>'+
     '<div class="tools" style="margin-top:12px"><button class="btn small" id="bSaveP">Guardar</button>'+
-    '<button class="btn small ghost" id="bCsvP">Exportar CSV del proyecto</button></div>'+
+    '<button class="btn small ghost" id="bCsvP">Exportar CSV del proyecto</button>'+
+    '<button class="btn small ghost" id="bWordP">Informe en Word</button></div>'+
     '</div></section></div>';
   a.innerHTML=h;
   $("bSaveP").onclick=function(){
     p.cliente=gv("pCliente");p.contratistas=gv("pContr");p.notas=gv("pNotas");
     p.ts=new Date().toISOString();p._d=true;put("proyectos",p);flash("Proyecto actualizado.");render()};
   $("bCsvP").onclick=function(){expCsv(p.id)};
+  $("bWordP").onclick=function(){expWord(p,null)};
+  $("bLogoI").onclick=function(){S.logoSlot="logoIzq";$("fLogo").click()};
+  $("bLogoD").onclick=function(){S.logoSlot="logoDer";$("fLogo").click()};
+  if($("bLogoIX")) $("bLogoIX").onclick=function(){delete p.logoIzq;p.ts=new Date().toISOString();p._d=true;put("proyectos",p);render()};
+  if($("bLogoDX")) $("bLogoDX").onclick=function(){delete p.logoDer;p.ts=new Date().toISOString();p._d=true;put("proyectos",p);render()};
   if($("bPrP")) $("bPrP").onclick=function(){imprimirProyecto(p,false)};
   if($("bPrPC")) $("bPrPC").onclick=function(){
     if(confirm("Va a generar un documento con las "+resumenProyecto(p).total+" cédulas del proyecto. Puede tardar y ser muy extenso. ¿Continuar?"))
@@ -743,6 +768,7 @@ function viewSede(a,ab){
     $("bNewF").onclick=function(){go({v:"ficha",pid:p.id,sid:s.id,fid:null})};
     $("bPrint").onclick=function(){imprimir(p,s)};
     $("bCsvS").onclick=function(){expCsv(p.id,s.id)};
+    if($("bWordS")) $("bWordS").onclick=function(){expWord(p,s)};
   }else if(S.tab==="resumen"){
     $("abar").classList.remove("hide");
     ab.innerHTML='<button class="btn ghost" id="bCsvR">Exportar CSV</button><button class="btn primary" id="bPrintR">Imprimir informe</button>';
@@ -766,10 +792,11 @@ function tabFichas(p,s){
     return '<div class="item" data-s="'+esc(x.severidad)+'" data-go=\'{"v":"ficha","pid":"'+p.id+'","sid":"'+s.id+'","fid":"'+x.id+'"}\'>'+
       '<div class="bar"></div><div class="txt"><div class="code">'+esc(x.codigo)+(x.pin?' · en plano':'')+'</div>'+
       '<div class="ttl">'+esc([x.tipoEl,x.rotulo].filter(Boolean).join(" ")||"Elemento sin identificar")+'</div>'+
-      '<div class="sub">'+esc([x.nivel,x.tipoDano,x.origen].filter(Boolean).join(" · "))+'</div></div>'+
+      '<div class="sub">'+esc([x.nivel,(x.danos&&x.danos.length?x.danos.join(", "):x.tipoDano),x.origen].filter(Boolean).join(" · "))+'</div></div>'+
       '<div class="n">'+((x.fotos||[]).length)+' ph'+(x._d?'<br>↑':'')+'</div></div>'}).join("");
   h+='</section><section><h2>Salidas</h2><div class="body"><div class="tools">'+
-    '<button class="btn small ghost" id="bCsvS">Exportar CSV de la sede</button></div>'+
+    '<button class="btn small ghost" id="bCsvS">Exportar CSV de la sede</button>'+
+    '<button class="btn small ghost" id="bWordS">Informe en Word</button></div>'+
     '<p class="hint" style="margin:11px 0 0">Las cédulas se imprimen desde el botón inferior: una página por elemento, más el plano de localización.</p></div></section>';
   return h;
 }
@@ -777,7 +804,7 @@ function tabFichas(p,s){
 var ESTRUCT=["Columna","Viga","Nudo viga-columna","Muro estructural","Losa o entrepiso","Escalera","Cubierta estructural","Cimentación"];
 function resumen(s){
   var f=fichasDe(s.id);
-  var r={total:f.length,sev:{},orig:{},hab:{},tipo:{},zona:{},ens:{},patol:{},
+  var r={total:f.length,sev:{},orig:{},hab:{},tipo:{},zona:{},ens:{},patol:{},danos:{},
     estruct:0,noEstruct:0,apuntala:[],restringido:[],muestras:[],sinFoto:0,sinSustento:0,sinPin:0};
   C.severidad.forEach(function(k){r.sev[k]=0});
   C.origen.forEach(function(k){r.orig[k]=0});
@@ -786,8 +813,10 @@ function resumen(s){
     if(r.sev[x.severidad]!==undefined)r.sev[x.severidad]++;
     if(r.orig[x.origen]!==undefined)r.orig[x.origen]++;
     if(r.hab[x.habilitacion]!==undefined)r.hab[x.habilitacion]++;
-    if(x.tipoEl){r.tipo[x.tipoEl]=(r.tipo[x.tipoEl]||0)+1;
-      if(ESTRUCT.indexOf(x.tipoEl)>=0)r.estruct++;else r.noEstruct++}
+    if(x.tipoEl)r.tipo[x.tipoEl]=(r.tipo[x.tipoEl]||0)+1;
+    if(claseFicha(x)==="Estructural")r.estruct++;else r.noEstruct++;
+    var ds=(x.danos&&x.danos.length)?x.danos:(x.tipoDano?[x.tipoDano]:[]);
+    ds.forEach(function(d){r.danos[d]=(r.danos[d]||0)+1});
     if(x.zona)r.zona[x.zona]=(r.zona[x.zona]||0)+1;
     (x.ensayos||[]).forEach(function(e){r.ens[e]=(r.ens[e]||0)+1});
     (x.patologia||[]).forEach(function(e){r.patol[e]=(r.patol[e]||0)+1});
@@ -843,6 +872,9 @@ function tabResumen(p,s){
     '</p></div></section>';
   h+='<section><h2>Concepto de habilitación</h2>'+bars(r.hab,r.total)+'</section>';
   h+='<section><h2>Elementos afectados por tipo</h2>'+bars(r.tipo,r.total)+'</section>';
+  h+='<section><h2>Sintomatología registrada</h2>'+bars(r.danos,r.total)+
+    '<div class="body" style="border-top:1px solid var(--rule2)"><p class="hint" style="margin:0">'+
+    'Un elemento puede presentar varias, así que la suma supera el total de fichas. El porcentaje es sobre fichas, no sobre síntomas.</p></div></section>';
   if(Object.keys(r.zona).length) h+='<section><h2>Distribución por zona o servicio</h2>'+bars(r.zona,r.total)+'</section>';
   if(Object.keys(r.patol).length) h+='<section><h2>Patología preexistente recurrente</h2>'+bars(r.patol,r.total)+'</section>';
   if(r.apuntala.length) h+='<section><h2>Apuntalamiento inmediato ('+r.apuntala.length+')</h2>'+
@@ -928,6 +960,15 @@ function bindPlano(p,s){
   Array.prototype.forEach.call(pi.querySelectorAll(".pin"),function(b){
     b.onclick=function(ev){ev.stopPropagation();go({v:"ficha",pid:p.id,sid:s.id,fid:b.dataset.fid})}});
 }
+$("fLogo").addEventListener("change",function(e){
+  var fl=e.target.files[0]; if(!fl)return;
+  var pr=proj(S.route.pid); if(!pr){e.target.value="";return}
+  shrink(fl,520,0.9).then(function(img){
+    pr[S.logoSlot||"logoIzq"]=img.src; pr.ts=new Date().toISOString(); pr._d=true; put("proyectos",pr);
+    flash("Logotipo cargado."); render();
+  }).catch(function(){flash("No se pudo procesar la imagen.")});
+  e.target.value="";
+});
 $("fPlano").addEventListener("change",function(e){
   var f=e.target.files[0]; if(!f)return;
   var s=sede(S.route.sid); if(!s)return;
@@ -941,8 +982,10 @@ $("fPlano").addEventListener("change",function(e){
 /* --- ficha --- */
 /* --- captura rápida: chips y herencia --- */
 var Q={
- tipoEl:[["Columna","Columna"],["Viga","Viga"],["Nudo viga-columna","Nudo"],["Muro estructural","Muro estr."],
-   ["Losa o entrepiso","Losa"],["Muro divisorio en mampostería","Mampostería"],["Cielo raso","Cielo raso"],["Fachada o antepecho","Fachada"]],
+ elEst:[["Columna","Columna"],["Viga","Viga"],["Nudo viga-columna","Nudo"],["Muro estructural","Muro estr."],
+   ["Losa o entrepiso","Losa"],["Escalera","Escalera"],["Cimentación","Cimentación"]],
+ elNoEst:[["Muro divisorio en mampostería","Muro divis."],["Fachada o antepecho","Fachada"],["Cielo raso","Cielo raso"],
+   ["Enchape o baldosa","Enchape"],["Revoque o pañete","Revoque"],["Ventanería o vidrio","Vidrio"],["Instalación suspendida","Inst. susp."]],
  tipoDano:[["Fisura","Fisura"],["Grieta pasante","Grieta"],["Desprendimiento de recubrimiento","Desprend."],
    ["Aplastamiento del concreto","Aplastam."],["Refuerzo expuesto","Refuerzo"],["Desplome o inclinación","Desplome"],["Sin daño aparente","Sin daño"]],
  patron:[["Diagonal — cortante","Diagonal"],["En X — cortante cíclico","En X"],["Horizontal — flexión o deslizamiento","Horizontal"],
@@ -950,6 +993,17 @@ var Q={
  ancho:[["Menor a 0,2 mm","< 0,2"],["0,2 a 1,0 mm","0,2 – 1,0"],["1,0 a 2,0 mm","1,0 – 2,0"],
    ["2,0 a 5,0 mm","2,0 – 5,0"],["Mayor a 5,0 mm","> 5,0"]]
 };
+function chipsM(id,arr,vals){
+  vals=vals||[];
+  return '<div class="chips multi" id="'+id+'">'+arr.map(function(o){
+    return '<button type="button" data-v="'+esc(o)+'" aria-pressed="'+(vals.indexOf(o)>=0?"true":"false")+'">'+esc(o)+'</button>'}).join("")+'</div>';
+}
+function gchips(id){var e=$(id); if(!e)return[];
+  return Array.prototype.filter.call(e.querySelectorAll("button"),function(b){
+    return b.getAttribute("aria-pressed")==="true"}).map(function(b){return b.dataset.v})}
+var ESTRUCT_L=["Columna","Viga","Nudo viga-columna","Muro estructural","Losa o entrepiso","Escalera","Cubierta estructural","Cimentación","Muro de contención","Diafragma"];
+function claseDe(t){return ESTRUCT_L.indexOf(t)>=0?"Estructural":"No estructural"}
+function claseFicha(x){return x.clase||claseDe(x.tipoEl)}
 function chipsF(id,quick,full,v){
   var known=quick.some(function(q){return q[0]===v});
   return '<div class="chips" id="'+id+'">'+
@@ -960,7 +1014,11 @@ function chipsF(id,quick,full,v){
 }
 document.addEventListener("click",function(e){
   var b=e.target.closest(".chips button"); if(!b)return;
-  var c=b.parentNode, s=$(c.id+"_s"); if(!s)return;
+  var c=b.parentNode;
+  if(c.classList.contains("multi")){
+    b.setAttribute("aria-pressed", b.getAttribute("aria-pressed")==="true"?"false":"true"); return;
+  }
+  var s=$(c.id+"_s"); if(!s)return;
   if(b.dataset.more!==undefined){ s.classList.remove("hide"); s.focus(); try{s.showPicker&&s.showPicker()}catch(err){} return }
   var on=b.getAttribute("aria-pressed")==="true";
   Array.prototype.forEach.call(c.querySelectorAll("button"),function(x){x.setAttribute("aria-pressed","false")});
@@ -999,8 +1057,9 @@ function viewFicha(a,ab){
     f={id:null,proyectoId:p.id,sedeId:s.id,consec:n,insp:S.insp.codigo,
       codigo:p.codigo+"-"+s.codigo+(S.insp.codigo?"-"+S.insp.codigo:"")+"-"+("000"+n).slice(-4),
       nivel:prev.nivel||"",zona:prev.zona||"",eje:prev.eje||"",rotulo:nextRotulo(prev.rotulo||""),
+      clase:prev.clase||claseDe(prev.tipoEl||"Columna"),
       tipoEl:prev.tipoEl||"",material:prev.material||"",dim:prev.dim||"",
-      tipoDano:prev.tipoDano||"",patron:prev.patron||"",ancho:prev.ancho||"",
+      danos:(prev.danos||[]).slice(),patrones:(prev.patrones||[]).slice(),ancho:prev.ancho||"",
       inspector:S.usuario||prev.inspector||"",fecha:stamp(),fotos:[],pin:null};
   }
   S.shots=(f.fotos||[]).slice();
@@ -1011,15 +1070,16 @@ function viewFicha(a,ab){
   var h='<div class="wrap"><section><div class="qf">';
   h+='<div class="grp"><button class="bigshot'+(S.shots.length?' has':'')+'" id="bShot" type="button">'+
      (S.shots.length?'Agregar otra fotografía':'Tomar fotografía')+'</button><div class="shots" id="shots"></div></div>';
-  h+='<div class="grp"><div class="lbl">Elemento'+heredado+'</div>'+chipsF("qEl",Q.tipoEl,C.tipoEl,f.tipoEl)+'</div>';
+  h+='<div class="grp"><div class="lbl">Clase de elemento <em>·</em></div>'+seg("fClase",C.claseEl,f.clase||claseDe(f.tipoEl),"c2")+'</div>';
+  h+='<div class="grp"><div class="lbl">Elemento'+heredado+'</div><div id="wrapEl"></div></div>';
   h+='<div class="grp"><div class="row">'+
      '<div><label for="fRot">Rótulo</label><input type="text" id="fRot" class="mono" value="'+esc(f.rotulo)+'" placeholder="COL-13"></div>'+
      '<div><label for="fNivel">Nivel</label><input type="text" id="fNivel" value="'+esc(f.nivel)+'" placeholder="Piso 2"></div>'+
      '</div></div>';
   h+='<div class="grp"><div class="lbl">Severidad <em>·</em></div>'+seg("fSev",C.severidad,f.severidad,"c4")+'</div>';
   h+='<div class="grp"><div class="lbl">Origen atribuido <em>·</em></div>'+seg("fOrig",C.origen,f.origen,"c3")+'</div>';
-  h+='<div class="grp"><div class="lbl">Tipo de daño'+heredado+'</div>'+chipsF("qDano",Q.tipoDano,C.tipoDano,f.tipoDano)+'</div>';
-  h+='<div class="grp"><div class="lbl">Patrón'+heredado+'</div>'+chipsF("qPat",Q.patron,C.patron,f.patron)+'</div>';
+  h+='<div class="grp"><div class="lbl">Sintomatología <span class="inh">marca todas las que apliquen</span></div><div id="wrapDano"></div></div>';
+  h+='<div class="grp"><div class="lbl">Patrón <span class="inh">puede ser más de uno</span></div><div id="wrapPat"></div></div>';
   h+='<div class="grp"><div class="lbl">Ancho máximo</div>'+chipsF("qAncho",Q.ancho,C.ancho,f.ancho)+'</div>';
   h+='</div>';
   h+='<button class="exp" id="bExp" type="button" aria-expanded="false"><span class="ar">›</span> Ampliar detalle</button>';
@@ -1064,6 +1124,17 @@ function viewFicha(a,ab){
   h+='</div></section></div>';
   a.innerHTML=h;
   renderShots();
+
+  function pintaClase(cl,conservar){
+    var est = cl!=="No estructural";
+    $("wrapEl").innerHTML  = chipsF("qEl", est?Q.elEst:Q.elNoEst, est?C.tipoElEst:C.tipoElNoEst, conservar?(f.tipoEl||""):"");
+    $("wrapDano").innerHTML= chipsM("qDanos", est?C.danoEst:C.danoNoEst, conservar?(f.danos||(f.tipoDano?[f.tipoDano]:[])):[]);
+    $("wrapPat").innerHTML = chipsM("qPats",  est?C.patronEst:C.patronNoEst, conservar?(f.patrones||(f.patron?[f.patron]:[])):[]);
+  }
+  pintaClase(f.clase||claseDe(f.tipoEl),true);
+  $("fClase").addEventListener("click",function(){
+    var self=this; setTimeout(function(){ pintaClase(gseg("fClase"),false) },0);
+  });
 
   $("bShot").onclick=function(){$("fPhoto").click()};
   $("bExp").onclick=function(){
@@ -1116,19 +1187,26 @@ $("fPhoto").addEventListener("change",function(e){
   }).catch(function(){flash("No se pudo procesar una de las imágenes.")});
 });
 function saveFicha(p,s,f,nuevo,salir){
+  if(!gseg("fClase")){flash("Falta indicar si el elemento es estructural o no estructural.");return}
   if(!gv("qEl_s")){flash("Falta el tipo de elemento.");return}
+  if(!gchips("qDanos").length){flash("Marca al menos una sintomatología. Si no hay daño, usa «Sin daño aparente».");return}
   if(!gseg("fSev")){flash("Falta la severidad.");return}
   if(!gseg("fOrig")){flash("Falta el origen atribuido. Es el campo que sostiene el dictamen.");return}
   var o={id:f.id||uid("f"),proyectoId:p.id,sedeId:s.id,consec:f.consec,codigo:f.codigo,insp:f.insp||S.insp.codigo,
     nivel:gv("fNivel"),eje:gv("fEje"),rotulo:gv("fRot"),zona:gv("fZona"),
     inspector:gv("fInsp"),fecha:gv("fFecha"),
-    tipoEl:gv("qEl_s"),material:gv("fMat"),dim:gv("fDim"),
-    tipoDano:gv("qDano_s"),patron:gv("qPat_s"),ancho:gv("qAncho_s"),extension:gv("fExt"),
+    clase:gseg("fClase"),tipoEl:gv("qEl_s"),material:gv("fMat"),dim:gv("fDim"),
+    danos:gchips("qDanos"),patrones:gchips("qPats"),
+    tipoDano:(gchips("qDanos")[0]||""),patron:(gchips("qPats")[0]||""),
+    ancho:gv("qAncho_s"),extension:gv("fExt"),
     severidad:gseg("fSev"),origen:gseg("fOrig"),indSis:gchk("fSis"),indPre:gchk("fPre"),sustento:gv("fSus"),
     patologia:gchk("fPatol"),habilitacion:gseg("fHab"),apuntalamiento:gseg("fApun"),
     ensayos:gchk("fEns"),muestra:gv("fMuestra"),obs:gv("fObs"),
     fotos:S.shots.slice(),pin:S.route._pin||f.pin||null,
     ts:new Date().toISOString(),_d:true};
+  var hh=(f.hist||[]).slice(-9);
+  hh.push({por:S.usuario||S.insp.codigo||"sin identificar",ts:new Date().toISOString(),acc:nuevo?"Levantamiento":"Modificación"});
+  o.hist=hh;
   var i=S.fichas.map(function(x){return x.id}).indexOf(o.id);
   if(i>=0)S.fichas[i]=o; else S.fichas.push(o);
   put("fichas",o);
@@ -1145,6 +1223,12 @@ function viewAjustes(a){a.innerHTML=""}
 
 /* ========== impresión de cédulas ========== */
 var SEVC={Leve:"#2F7A52",Moderado:"#A8821A",Severo:"#B85A25",Grave:"#96211F"};
+function logosDe(p){
+  if(!p||(!p.logoIzq&&!p.logoDer))return "";
+  return '<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:7px">'+
+    (p.logoIzq?'<img src="'+p.logoIzq+'" style="max-height:46px;max-width:34%">':'<span></span>')+
+    (p.logoDer?'<img src="'+p.logoDer+'" style="max-height:46px;max-width:34%">':'<span></span>')+'</div>';
+}
 function kv(k,v){ if(!v||(Array.isArray(v)&&!v.length))return "";
   return '<div class="kv"><span class="k">'+esc(k)+'</span><span class="v">'+esc(Array.isArray(v)?v.join(", "):v)+'</span></div>'}
 function pieDe(p,s){
@@ -1171,7 +1255,7 @@ function bloqueResumen(p,s){
       return '<b>'+esc(x.codigo)+'</b> — '+esc([x.tipoEl,x.rotulo,x.nivel,x.zona,x.tipoDano].filter(Boolean).join(", "))}).join("<br>")+'</p></div>';
   }
   var e=s.estructura||{};
-  return '<div class="cedula">'+(S.usuario?'<div class="wm">'+esc(S.usuario)+'</div>':'')+
+  return '<div class="cedula">'+(S.usuario?'<div class="wm">'+esc(S.usuario)+'</div>':'')+logosDe(p)+
     '<div class="ch"><div class="l"><b>Resumen del levantamiento</b>'+esc(p.nombre)+'<br>'+esc(s.nombre)+'</div>'+
     '<div class="r"><span class="code">'+esc(p.codigo)+'-'+esc(s.codigo)+'</span>'+
     '<div style="font-size:9pt">'+r.total+' fichas</div></div></div>'+
@@ -1194,17 +1278,21 @@ function bloqueResumen(p,s){
 function htmlCedulas(p,s){
   var f=fichasDe(s.id), h="";
   f.forEach(function(x,i){
-    h+='<div class="cedula">'+(S.usuario?'<div class="wm">'+esc(S.usuario)+'</div>':'')+
+    h+='<div class="cedula">'+(S.usuario?'<div class="wm">'+esc(S.usuario)+'</div>':'')+logosDe(p)+
       '<div class="ch"><div class="l"><b>Cédula del elemento</b>'+esc(p.nombre)+'<br>'+esc(s.nombre)+'</div>'+
       '<div class="r"><span class="code">'+esc(x.codigo)+'</span>'+
       (x.severidad?'<span class="sev" style="background:'+SEVC[x.severidad]+'">'+esc(x.severidad)+'</span>':"")+'</div></div>'+
       '<div class="grid2">'+
-      kv("Elemento",[x.tipoEl,x.rotulo].filter(Boolean).join(" "))+kv("Material",x.material)+
+      kv("Elemento",[x.tipoEl,x.rotulo].filter(Boolean).join(" "))+kv("Clase",claseFicha(x))+kv("Material",x.material)+
       kv("Nivel",x.nivel)+kv("Eje o coordenada",x.eje)+kv("Zona o servicio",x.zona)+kv("Dimensiones",x.dim)+
-      kv("Tipo de daño",x.tipoDano)+kv("Patrón",x.patron)+kv("Ancho máximo",x.ancho)+kv("Extensión",x.extension)+
+      kv("Ancho máximo",x.ancho)+kv("Extensión",x.extension)+
       kv("Origen atribuido",x.origen)+kv("Habilitación",x.habilitacion)+
       kv("Apuntalamiento",x.apuntalamiento)+kv("Muestra",x.muestra)+
       kv("Inspector",x.inspector)+kv("Fecha",x.fecha)+'</div>'+
+      '<div class="blk"><h4>Sintomatología observada</h4><p>'+
+        esc(((x.danos&&x.danos.length)?x.danos:(x.tipoDano?[x.tipoDano]:["No registrada"])).join(" · "))+'</p></div>'+
+      (((x.patrones&&x.patrones.length)||x.patron)?'<div class="blk"><h4>Patrón</h4><p>'+
+        esc(((x.patrones&&x.patrones.length)?x.patrones:[x.patron]).join(" · "))+'</p></div>':"")+
       (x.indSis&&x.indSis.length?'<div class="blk"><h4>Indicios de daño sísmico</h4><p>'+esc(x.indSis.join(" · "))+'</p></div>':"")+
       (x.indPre&&x.indPre.length?'<div class="blk"><h4>Indicios de condición preexistente</h4><p>'+esc(x.indPre.join(" · "))+'</p></div>':"")+
       (x.sustento?'<div class="blk"><h4>Sustento de la atribución</h4><p>'+esc(x.sustento)+'</p></div>':"")+
@@ -1214,6 +1302,8 @@ function htmlCedulas(p,s){
       ((x.fotos||[]).length?'<div class="blk"><h4>Registro fotográfico</h4><div class="pgrid">'+
         x.fotos.map(function(ph,j){return '<figure><img src="'+ph.src+'"><figcaption>Foto '+(j+1)+'. '+
           esc(ph.nota||"Sin descripción")+'</figcaption></figure>'}).join("")+'</div></div>':"")+
+      ((x.hist&&x.hist.length)?'<div class="blk"><h4>Trazabilidad de la ficha</h4><p>'+
+        x.hist.map(function(z){return esc(z.acc+": "+z.por+" · "+new Date(z.ts).toLocaleString("es-CO"))}).join("<br>")+'</p></div>':"")+
       '<div style="font-size:8pt;color:#55635F;margin-top:9px">Ficha '+(i+1)+' de '+f.length+
       (x.pin?' · localizada en el plano con el número '+x.consec:' · sin localización en plano')+'</div>'+
       pieDe(p,s)+'</div>';
@@ -1250,7 +1340,7 @@ function imprimirProyecto(p,conCedulas){
       return '<div class="kv"><span class="k">'+esc(k)+'</span><span class="v">'+obj[k]+
         ' &nbsp;('+Math.round(obj[k]*100/tot)+' %)</span></div>'}).join("")+'</div>';
   }
-  var h='<div class="cedula">'+(S.usuario?'<div class="wm">'+esc(S.usuario)+'</div>':'')+
+  var h='<div class="cedula">'+(S.usuario?'<div class="wm">'+esc(S.usuario)+'</div>':'')+logosDe(p)+
     '<div class="ch"><div class="l"><b>'+esc(p.nombre)+'</b>'+esc(p.contratistas)+'<br>'+esc(p.cliente||"")+'</div>'+
     '<div class="r"><span class="code">'+esc(p.codigo)+'</span>'+
     '<div style="font-size:9pt">Consolidado · '+t.porSede.length+' sedes</div></div></div>'+
@@ -1292,7 +1382,7 @@ function imprimir(p,s){
   var e=s.estructura||{};
   var h='';
   /* portada + plano de localización */
-  h+='<div class="cedula">'+(S.usuario?'<div class="wm">'+esc(S.usuario)+'</div>':'')+
+  h+='<div class="cedula">'+(S.usuario?'<div class="wm">'+esc(S.usuario)+'</div>':'')+logosDe(p)+
     '<div class="ch"><div class="l"><b>'+esc(p.nombre)+'</b>'+esc(p.contratistas)+'<br>'+esc(p.cliente||"")+'</div>'+
     '<div class="r"><span class="code">'+esc(p.codigo)+'-'+esc(s.codigo)+'</span>'+
     '<div style="font-size:9pt">Mapeo estructural · '+f.length+' fichas</div></div></div>'+
@@ -1320,8 +1410,8 @@ function imprimir(p,s){
 /* ========== exportación ========== */
 var COLS=[["codigo","Ficha"],["consec","Consecutivo"],["fecha","Fecha"],["inspector","Inspector"],
   ["_proy","Proyecto"],["_sede","Sede"],["nivel","Nivel"],["zona","Zona"],["eje","Eje"],["rotulo","Rótulo"],
-  ["tipoEl","Elemento"],["material","Material"],["dim","Dimensiones"],["tipoDano","Tipo de daño"],
-  ["patron","Patrón"],["ancho","Ancho"],["extension","Extensión"],["severidad","Severidad"],["origen","Origen"],
+  ["tipoEl","Elemento"],["_clase","Clase"],["material","Material"],["dim","Dimensiones"],["_danos","Sintomatología"],
+  ["_patrones","Patrón"],["ancho","Ancho"],["extension","Extensión"],["severidad","Severidad"],["origen","Origen"],
   ["indSis","Indicios sísmicos"],["indPre","Indicios preexistentes"],["sustento","Sustento"],["patologia","Patología"],
   ["habilitacion","Habilitación"],["apuntalamiento","Apuntalamiento"],["ensayos","Ensayos"],["muestra","Muestra"],
   ["obs","Observaciones"],["_pin","Localizado en plano"],["_nf","Fotos"]];
@@ -1333,11 +1423,96 @@ function expCsv(pid,sid){
   var rows=f.map(function(x){
     var o=Object.assign({},x);
     o._proy=(proj(x.proyectoId)||{}).nombre||""; o._sede=(sede(x.sedeId)||{}).nombre||"";
-    o._pin=x.pin?"Sí":"No"; o._nf=(x.fotos||[]).length;
+    o._pin=x.pin?"Sí":"No"; o._nf=(x.fotos||[]).length; o._clase=claseFicha(x);
+    o._danos=(x.danos&&x.danos.length)?x.danos:(x.tipoDano?[x.tipoDano]:[]);
+    o._patrones=(x.patrones&&x.patrones.length)?x.patrones:(x.patron?[x.patron]:[]);
     return COLS.map(function(c){return cc(o[c[0]])}).join(";")});
   dl("mapeo_"+stamp()+".csv",new Blob(["\uFEFF"+COLS.map(function(c){return c[1]}).join(";")+"\n"+rows.join("\n")],
     {type:"text/csv;charset=utf-8"}));
 }
+function expWord(p,s){
+  var sedes = s?[s]:sedesDe(p.id).filter(function(x){return fichasDe(x.id).length});
+  if(!sedes.length){flash("No hay fichas para exportar.");return}
+  var F='font-family:Calibri,Arial,sans-serif;';
+  var TH='background:#14514D;color:#fff;font-weight:bold;padding:5px 7px;font-size:9pt;text-align:left;';
+  var TD='padding:5px 7px;font-size:9.5pt;border-bottom:1px solid #C9D0CE;vertical-align:top;';
+  function fila(k,v){ if(v==null||v===""||(Array.isArray(v)&&!v.length))return "";
+    return '<tr><td style="'+TD+'width:32%;color:#55635F"><b>'+esc(k)+'</b></td><td style="'+TD+'">'+esc(Array.isArray(v)?v.join(", "):v)+'</td></tr>'}
+  function tablaObj(tit,obj,tot){
+    var ks=Object.keys(obj).filter(function(k){return obj[k]>0}); if(!ks.length)return "";
+    ks.sort(function(a,b){return obj[b]-obj[a]});
+    return '<h3 style="'+F+'font-size:11pt;color:#14514D;margin:14px 0 5px">'+esc(tit)+'</h3>'+
+      '<table cellspacing="0" style="width:100%;border-collapse:collapse">'+
+      ks.map(function(k){return '<tr><td style="'+TD+'width:60%">'+esc(k)+'</td><td style="'+TD+'">'+obj[k]+
+        ' ('+Math.round(obj[k]*100/tot)+' %)</td></tr>'}).join("")+'</table>';
+  }
+  var cab=(p.logoIzq||p.logoDer)?'<table style="width:100%"><tr>'+
+    '<td>'+(p.logoIzq?'<img src="'+p.logoIzq+'" height="46">':'')+'</td>'+
+    '<td align="right">'+(p.logoDer?'<img src="'+p.logoDer+'" height="46">':'')+'</td></tr></table>':'';
+  var out='<h1 style="'+F+'font-size:17pt;color:#14514D;margin:0 0 3px">'+esc(p.nombre)+'</h1>'+
+    '<p style="'+F+'font-size:10pt;color:#55635F;margin:0 0 16px">'+esc(p.contratistas)+'<br>'+esc(p.cliente||"")+'</p>';
+  sedes.forEach(function(sd){
+    var r=resumen(sd), f=fichasDe(sd.id), e=sd.estructura||{};
+    out+='<h2 style="'+F+'font-size:14pt;color:#14514D;border-bottom:2px solid #14514D;padding-bottom:4px;margin:20px 0 10px">'+
+      esc(sd.nombre)+'</h2><table cellspacing="0" style="width:100%;border-collapse:collapse">'+
+      fila("Direccion",sd.direccion)+fila("Tipo de evaluacion",sd.tipoEval)+
+      fila("Sistema estructural",e.sistema)+fila("Material",e.material)+fila("Pisos",e.pisos)+
+      fila("Area aproximada",e.area?e.area+" m2":"")+fila("Ano de construccion",e.ano)+
+      fila("Norma de diseno",e.norma)+fila("Irregularidades",e.irregularidades)+
+      fila("Intervenciones previas",e.intervenciones)+fila("Sectores no inspeccionados",e.sectores)+
+      fila("Fichas levantadas",String(r.total))+fila("Elementos estructurales",String(r.estruct))+
+      fila("Elementos no estructurales",String(r.noEstruct))+
+      fila("Dano atribuido al sismo",Math.round((r.orig["Sísmico"]||0)*100/(r.total||1))+" %")+
+      '</table>'+
+      tablaObj("Distribucion por severidad",r.sev,r.total)+
+      tablaObj("Origen atribuido del dano",r.orig,r.total)+
+      tablaObj("Sintomatologia registrada",r.danos,r.total)+
+      tablaObj("Concepto de habilitacion",r.hab,r.total)+
+      tablaObj("Programa de ensayos",r.ens,r.total)+
+      '<h3 style="'+F+'font-size:11pt;color:#14514D;margin:16px 0 5px">Inventario de fichas</h3>'+
+      '<table cellspacing="0" style="width:100%;border-collapse:collapse">'+
+      '<tr><td style="'+TH+'">Ficha</td><td style="'+TH+'">Elemento</td><td style="'+TH+'">Clase</td>'+
+      '<td style="'+TH+'">Sintomatologia</td><td style="'+TH+'">Severidad</td><td style="'+TH+'">Origen</td></tr>'+
+      f.map(function(x){return '<tr><td style="'+TD+'">'+esc(x.codigo)+'</td><td style="'+TD+'">'+
+        esc([x.tipoEl,x.rotulo].filter(Boolean).join(" "))+'</td><td style="'+TD+'">'+esc(claseFicha(x))+'</td><td style="'+TD+'">'+
+        esc(((x.danos&&x.danos.length)?x.danos:[x.tipoDano||"—"]).join(", "))+'</td><td style="'+TD+'">'+
+        esc(x.severidad||"")+'</td><td style="'+TD+'">'+esc(x.origen||"")+'</td></tr>'}).join("")+'</table>';
+    f.forEach(function(x){
+      out+='<br style="page-break-before:always">'+cab+
+        '<h3 style="'+F+'font-size:12pt;color:#14514D;margin:0 0 6px">Cedula '+esc(x.codigo)+' &mdash; '+
+        esc([x.tipoEl,x.rotulo].filter(Boolean).join(" "))+'</h3>'+
+        '<table cellspacing="0" style="width:100%;border-collapse:collapse">'+
+        fila("Clase",claseFicha(x))+fila("Nivel",x.nivel)+fila("Eje",x.eje)+fila("Zona o servicio",x.zona)+
+        fila("Material",x.material)+fila("Dimensiones",x.dim)+
+        fila("Sintomatologia",(x.danos&&x.danos.length)?x.danos:[x.tipoDano].filter(Boolean))+
+        fila("Patron",(x.patrones&&x.patrones.length)?x.patrones:[x.patron].filter(Boolean))+
+        fila("Ancho maximo",x.ancho)+fila("Extension",x.extension)+
+        fila("Severidad",x.severidad)+fila("Origen atribuido",x.origen)+
+        fila("Indicios de dano sismico",x.indSis)+fila("Indicios preexistentes",x.indPre)+
+        fila("Sustento",x.sustento)+fila("Patologia",x.patologia)+
+        fila("Habilitacion",x.habilitacion)+fila("Apuntalamiento",x.apuntalamiento)+
+        fila("Ensayos requeridos",x.ensayos)+fila("Muestra",x.muestra)+fila("Observaciones",x.obs)+
+        fila("Inspector",x.inspector)+fila("Fecha",x.fecha)+
+        fila("Trazabilidad",(x.hist||[]).map(function(z){return z.acc+": "+z.por+" ("+new Date(z.ts).toLocaleDateString("es-CO")+")"}))+
+        '</table>'+
+        ((x.fotos||[]).length?'<table style="width:100%;margin-top:9px"><tr>'+
+          x.fotos.map(function(ph,j){return '<td width="50%" style="padding:4px;vertical-align:top">'+
+            '<img src="'+ph.src+'" width="300"><div style="'+F+'font-size:8pt;color:#55635F">Foto '+(j+1)+'. '+
+            esc(ph.nota||"Sin descripcion")+'</div></td>'+((j%2===1)?'</tr><tr>':'')}).join("")+'</tr></table>':'');
+    });
+  });
+  out+='<p style="'+F+'font-size:7.5pt;color:#55635F;margin-top:18px">Documento de circulacion restringida. &copy; '+
+    (new Date().getFullYear())+' '+esc(p.contratistas)+'. Obra protegida por la Ley 23 de 1982 y la Decision Andina 351 de 1993.'+
+    (S.usuario?' Ejemplar generado por '+esc(S.usuario)+'.':'')+'</p>';
+  var docu='<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" '+
+    'xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8">'+
+    '<!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View></w:WordDocument></xml><![endif]-->'+
+    '<style>@page{size:21.59cm 27.94cm;margin:2cm 1.8cm}body{'+F+'}</style></head><body>'+cab+out+'</body></html>';
+  dl("informe_"+(s?s.codigo:p.codigo)+"_"+stamp()+".doc",
+    new Blob(["\ufeff"+docu],{type:"application/msword;charset=utf-8"}));
+  flash("Informe en Word generado. Abrelo en Word y guardalo como .docx para editarlo.");
+}
+
 function expJson(){
   dl("respaldo_mapeo_"+stamp()+".json",new Blob([JSON.stringify({
     app:"Mapeo estructural IACON-TERRAM",exportado:new Date().toISOString(),usuario:S.usuario,
