@@ -1,0 +1,132 @@
+MAPEO ESTRUCTURAL · IACON — TERRAM
+Montaje completo con GitHub
+=====================================================
+
+GitHub cubre las dos necesidades: publica la aplicacion y
+guarda los datos del equipo. Son DOS repositorios distintos,
+y esa separacion es deliberada.
+
+  1) Repositorio PUBLICO  -> aloja la aplicacion
+  2) Repositorio PRIVADO  -> guarda las fichas levantadas
+
+GitHub Pages solo funciona con repositorios publicos en las
+cuentas gratuitas. Por eso la aplicacion va en uno publico y
+los datos en otro privado. La aplicacion no contiene ninguna
+informacion del proyecto, asi que publicarla no expone nada.
+
+-----------------------------------------------------
+PASO 1 · REPOSITORIO DE LA APLICACION (publico)
+-----------------------------------------------------
+  1. github.com > New repository
+     Nombre: mapeo-app     Visibilidad: Public
+     Marca "Add a README file"
+  2. Add file > Upload files. Sube estos cinco:
+       index.html
+       sw.js
+       manifest.webmanifest
+       icon-192.png
+       icon-512.png
+     Commit changes.
+  3. Settings > Pages
+     Source: Deploy from a branch
+     Branch: main    Folder: / (root)    Save
+  4. A los dos o tres minutos queda publicada en
+       https://TUUSUARIO.github.io/mapeo-app/
+     Esa es la direccion que reparte al equipo.
+
+-----------------------------------------------------
+PASO 2 · REPOSITORIO DE DATOS (privado)
+-----------------------------------------------------
+  1. github.com > New repository
+     Nombre: mapeo-datos    Visibilidad: Private
+     Marca "Add a README file"  (un repo vacio da error)
+  2. Nada mas. Las carpetas las crea sola la aplicacion:
+       datos/proyectos/
+       datos/sedes/
+       datos/fichas/{sede}/
+
+-----------------------------------------------------
+PASO 3 · TOKEN PARA CADA PERSONA
+-----------------------------------------------------
+Un token por persona, no uno compartido. Si alguien pierde
+el celular se revoca el suyo y nadie mas se afecta.
+
+  1. github.com > foto de perfil > Settings
+  2. Developer settings > Personal access tokens
+     > Fine-grained tokens > Generate new token
+  3. Token name:    mapeo-NOMBREDELAPERSONA
+     Expiration:    90 dias (o lo que dure el contrato)
+     Repository access: Only select repositories
+                        -> mapeo-datos
+     Permissions > Repository permissions
+                        -> Contents:  Read and write
+     Los demas permisos se dejan en No access.
+  4. Generate token y COPIALO. GitHub no lo vuelve a mostrar.
+
+Enviaselo a cada persona por un canal privado. El token no es
+una contrasena de GitHub: solo permite leer y escribir en ese
+repositorio de datos.
+
+-----------------------------------------------------
+PASO 4 · CONFIGURAR CADA DISPOSITIVO
+-----------------------------------------------------
+  1. Abrir  https://TUUSUARIO.github.io/mapeo-app/
+  2. Instalarla en la pantalla de inicio.
+       Android Chrome: menu > Instalar aplicacion
+       iPhone Safari:  Compartir > Agregar a pantalla de inicio
+  3. En la pantalla de Proyectos, seccion
+     "Repositorio compartido (GitHub)":
+       Usuario u organizacion : TUUSUARIO
+       Repositorio            : mapeo-datos
+       Rama                   : main
+       Carpeta                : datos
+       Token                  : el de esa persona
+  4. Guardar configuracion > Probar conexion.
+     Debe responder que la conexion es correcta.
+  5. Escribir el nombre de la persona en "Quien diligencia
+     en este equipo".
+
+-----------------------------------------------------
+COMO OPERA EN CAMPO
+-----------------------------------------------------
+El indicador de arriba a la derecha muestra el estado:
+
+  git ✓      todo sincronizado
+  git ↑7     hay 7 fichas sin subir
+  ↑3 / ↓12   sincronizando en ese momento
+
+Se levanta sin señal todo el dia. Al salir a zona con señal
+se toca el indicador: sube lo propio y baja lo de los demas.
+Solo viajan los archivos que cambiaron, no todo el proyecto.
+
+Cada ficha es un archivo separado, asi que dos inspectores
+trabajando al tiempo nunca se sobrescriben. Si la misma ficha
+se edita en dos equipos, gana la version mas reciente.
+
+-----------------------------------------------------
+LO QUE HAY QUE TENER PRESENTE
+-----------------------------------------------------
+  - Las fotos viajan dentro del archivo de cada ficha. Un
+    levantamiento grande puede llegar a varios cientos de MB
+    en el repositorio. Para el Contrato 52 alcanza de sobra,
+    pero no es el sitio para archivar video.
+  - Sincronizar con datos moviles consume. Mejor con wifi al
+    final de la jornada.
+  - El respaldo local sigue siendo la red de seguridad:
+    Proyectos > Exportar respaldo. Un token vencido o un
+    error de red no debe costar un dia de trabajo.
+  - Los tokens vencen. Anota la fecha y renuevalos antes.
+  - Al terminar el contrato: revocar todos los tokens y
+    decidir si el repositorio de datos se archiva o se borra.
+
+-----------------------------------------------------
+ACTUALIZAR LA APLICACION
+-----------------------------------------------------
+Sube los archivos nuevos al repositorio publico y cambia el
+numero de CACHE en sw.js (mapeo-v2 a mapeo-v3). Sin ese
+cambio los dispositivos siguen con la version vieja. Los
+datos levantados no se pierden al actualizar.
+
+=====================================================
+Documento de circulacion restringida.
+(c) 2026 IACON S.A.S. — TERRAM Consultoria y Construccion S.A.S.

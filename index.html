@@ -1,0 +1,1407 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mapeo estructural · IACON — TERRAM</title>
+<style>
+:root{
+  --paper:#F4F6F5; --card:#FFFFFF; --ink:#14201E; --ink2:#4A5956; --ink3:#7C8B87;
+  --rule:#CBD3D0; --rule2:#E3E8E6; --teal:#14514D; --teal2:#0F403D; --tealsoft:#E3EDEB;
+  --leve:#2F7A52; --moderado:#A8821A; --severo:#B85A25; --grave:#96211F;
+  --warn:#FDF3E3; --warnink:#7A5310;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:var(--sans);background:var(--paper);color:var(--ink);font-size:16px;line-height:1.45;-webkit-text-size-adjust:100%}
+.wrap{max-width:680px;margin:0 auto;padding:0 14px}
+.app{padding-bottom:104px}
+
+/* shell */
+.topbar{position:sticky;top:0;z-index:60;background:var(--teal);color:#fff}
+.topbar .wrap{display:flex;align-items:center;gap:10px;padding:9px 14px}
+.back{background:rgba(255,255,255,.16);border:none;color:#fff;font:inherit;font-size:20px;line-height:1;
+  width:34px;height:34px;border-radius:8px;cursor:pointer;flex:none;padding:0}
+.tt{flex:1;min-width:0}
+.tt h1{font-size:15px;font-weight:650;margin:0;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tt p{font-size:12.5px;margin:0;opacity:.82;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.syncdot{font-size:11.5px;font-family:var(--mono);background:rgba(255,255,255,.16);padding:5px 8px;border-radius:6px;
+  cursor:pointer;border:none;color:#fff;flex:none}
+.crumb{background:var(--teal2);color:#CFE0DE;font-size:12.5px;padding:6px 0}
+.crumb .wrap{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.crumb b{color:#fff;font-weight:600}
+.notice{background:var(--warn);color:var(--warnink);border-bottom:1px solid #E9D6AE;font-size:13.5px;padding:9px 0;display:none}
+.conf{background:#26302E;color:#B9C6C3;font-size:11.5px;padding:7px 0;text-align:center;letter-spacing:.01em}
+
+/* tabs */
+.tabs{display:flex;background:#fff;border-bottom:1px solid var(--rule2);position:sticky;top:52px;z-index:50}
+.tabs button{flex:1;font:inherit;font-size:13.5px;font-weight:600;padding:12px 4px;background:none;border:none;
+  color:var(--ink3);cursor:pointer;border-bottom:2.5px solid transparent}
+.tabs button[aria-selected="true"]{color:var(--teal);border-bottom-color:var(--teal)}
+
+/* bloques */
+section{background:var(--card);border:1px solid var(--rule2);border-radius:10px;margin:14px 0;overflow:hidden}
+section>h2{font-size:13px;font-weight:650;margin:0;padding:11px 14px;border-bottom:1px solid var(--rule2);background:#F8FAF9;color:var(--ink2)}
+.body{padding:14px}
+.row{display:flex;gap:10px}
+.row>*{flex:1;min-width:0}
+label{display:block;font-size:13px;font-weight:600;color:var(--ink2);margin:0 0 5px}
+.hint{font-size:12px;color:var(--ink3);font-weight:400;margin:-2px 0 6px}
+.field{margin-bottom:14px}.field:last-child{margin-bottom:0}
+input[type=text],input[type=date],input[type=number],select,textarea{width:100%;font:inherit;font-size:16px;padding:11px 12px;
+  border:1px solid var(--rule);border-radius:8px;background:#fff;color:var(--ink);appearance:none;-webkit-appearance:none}
+select{background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8'><path d='M1 1l5 5 5-5' fill='none' stroke='%234A5956' stroke-width='2'/></svg>");
+  background-repeat:no-repeat;background-position:right 12px center;padding-right:34px}
+textarea{min-height:74px;resize:vertical}
+input:focus,select:focus,textarea:focus,button:focus-visible{outline:3px solid rgba(20,81,77,.35);outline-offset:1px;border-color:var(--teal)}
+.mono{font-family:var(--mono);letter-spacing:.02em}
+
+.seg{display:grid;gap:7px}
+.seg.c4{grid-template-columns:repeat(4,1fr)}.seg.c3{grid-template-columns:repeat(3,1fr)}.seg.c2{grid-template-columns:repeat(2,1fr)}
+.seg button{font:inherit;font-size:13.5px;font-weight:600;padding:13px 4px;border-radius:8px;cursor:pointer;
+  border:1.5px solid var(--rule);background:#fff;color:var(--ink2);min-height:52px;line-height:1.2}
+.seg button[aria-pressed="true"]{color:#fff;border-color:transparent;background:var(--teal)}
+.seg button[data-v="Leve"][aria-pressed="true"]{background:var(--leve)}
+.seg button[data-v="Moderado"][aria-pressed="true"]{background:var(--moderado)}
+.seg button[data-v="Severo"][aria-pressed="true"]{background:var(--severo)}
+.seg button[data-v="Grave"][aria-pressed="true"]{background:var(--grave)}
+.checks{display:grid;gap:2px}
+.checks label{display:flex;gap:10px;align-items:flex-start;font-size:14.5px;font-weight:400;color:var(--ink);
+  padding:9px 2px;margin:0;cursor:pointer;border-bottom:1px solid var(--rule2)}
+.checks label:last-child{border-bottom:none}
+.checks input{width:21px;height:21px;margin:1px 0 0;flex:none;accent-color:var(--teal)}
+.split{display:grid;gap:14px;grid-template-columns:1fr}
+@media(min-width:560px){.split{grid-template-columns:1fr 1fr}}
+.split h3{font-size:12.5px;font-weight:650;margin:0 0 4px;color:var(--ink2);padding-bottom:6px;border-bottom:2px solid var(--rule)}
+.split .sis h3{border-color:var(--severo);color:var(--severo)}
+
+/* botones */
+.btn{font:inherit;font-size:15px;font-weight:650;border-radius:9px;padding:14px 16px;cursor:pointer;
+  border:1.5px solid var(--teal);background:#fff;color:var(--teal)}
+.btn.primary{background:var(--teal);color:#fff}
+.btn.ghost{border-color:var(--rule);color:var(--ink2)}
+.btn.danger{border-color:#D9B3B2;color:var(--grave)}
+.btn.small{padding:9px 12px;font-size:13.5px;border-radius:7px}
+.btn.block{display:block;width:100%}
+.tools{display:flex;flex-wrap:wrap;gap:7px}
+.actionbar{position:fixed;left:0;right:0;bottom:0;z-index:70;background:rgba(244,246,245,.96);
+  backdrop-filter:blur(8px);border-top:1px solid var(--rule);padding:10px 0 max(10px,env(safe-area-inset-bottom))}
+.actionbar .wrap{display:flex;gap:9px}
+.actionbar .btn{flex:1}
+
+/* listas */
+.item{display:flex;gap:11px;align-items:center;padding:13px 14px;border-bottom:1px solid var(--rule2);cursor:pointer;background:#fff}
+.item:last-child{border-bottom:none}
+.item:hover{background:#F8FAF9}
+.item .bar{width:4px;align-self:stretch;border-radius:2px;flex:none;background:var(--rule)}
+.item[data-s="Leve"] .bar{background:var(--leve)}
+.item[data-s="Moderado"] .bar{background:var(--moderado)}
+.item[data-s="Severo"] .bar{background:var(--severo)}
+.item[data-s="Grave"] .bar{background:var(--grave)}
+.item .txt{flex:1;min-width:0}
+.item .code{font-family:var(--mono);font-size:11.5px;color:var(--ink3)}
+.item .ttl{font-size:15px;font-weight:600;margin:1px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.item .sub{font-size:13px;color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.item .n{font-size:11.5px;color:var(--ink3);font-family:var(--mono);flex:none;text-align:right}
+.empty{padding:28px 16px;text-align:center;color:var(--ink3);font-size:14px}
+.pill{display:inline-block;font-size:11.5px;font-weight:600;padding:3px 8px;border-radius:20px;
+  background:var(--tealsoft);color:var(--teal);margin-right:5px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;padding:14px}
+.stat{text-align:center;padding:10px 4px;border-radius:8px;background:#F8FAF9;border:1px solid var(--rule2)}
+.stat b{display:block;font-size:20px;font-weight:650;line-height:1.15}
+.stat span{font-size:11px;color:var(--ink2)}
+.stat.leve b{color:var(--leve)}.stat.moderado b{color:var(--moderado)}
+.stat.severo b{color:var(--severo)}.stat.grave b{color:var(--grave)}
+
+/* fotos */
+.shots{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:9px;margin-top:12px}
+.shot{position:relative;border:1px solid var(--rule);border-radius:8px;overflow:hidden;background:#EDF0EF}
+.shot img{display:block;width:100%;height:88px;object-fit:cover}
+.shot input{width:100%;border:none;border-top:1px solid var(--rule2);font-size:12px;padding:7px 8px;border-radius:0}
+.shot .del{position:absolute;top:5px;right:5px;width:26px;height:26px;border-radius:50%;border:none;
+  background:rgba(10,20,18,.72);color:#fff;font-size:16px;line-height:1;cursor:pointer;padding:0}
+.addshot{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;min-height:54px;font:inherit;
+  font-size:15px;font-weight:600;border:1.5px dashed var(--teal);background:var(--tealsoft);color:var(--teal);
+  border-radius:9px;cursor:pointer}
+
+/* plano */
+.planowrap{position:relative;background:#E8ECEB;border-radius:8px;overflow:auto;max-height:64vh;touch-action:pan-x pan-y}
+.planoinner{position:relative;display:inline-block;min-width:100%}
+.planoinner img{display:block;width:100%;height:auto}
+.pin{position:absolute;transform:translate(-50%,-100%);cursor:pointer;background:none;border:none;padding:0}
+.pin i{display:block;width:26px;height:26px;border-radius:50% 50% 50% 2px;transform:rotate(45deg);
+  background:var(--teal);border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4)}
+.pin[data-s="Leve"] i{background:var(--leve)}.pin[data-s="Moderado"] i{background:var(--moderado)}
+.pin[data-s="Severo"] i{background:var(--severo)}.pin[data-s="Grave"] i{background:var(--grave)}
+.pin b{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;
+  font-size:10.5px;font-family:var(--mono);font-weight:700;pointer-events:none}
+.placing{outline:3px solid var(--teal);outline-offset:-3px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.hide{display:none!important}
+
+
+/* captura rápida */
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips button{font:inherit;font-size:13.5px;font-weight:600;padding:10px 13px;border-radius:22px;
+  border:1.5px solid var(--rule);background:#fff;color:var(--ink2);cursor:pointer;min-height:44px;line-height:1.15}
+.chips button[aria-pressed="true"]{background:var(--teal);color:#fff;border-color:transparent}
+.chips button.more{border-style:dashed;color:var(--teal);border-color:var(--teal)}
+.chips button.more[aria-pressed="true"]{background:var(--teal);color:#fff;border-style:solid}
+.bigshot{display:flex;align-items:center;justify-content:center;gap:11px;width:100%;min-height:96px;
+  font:inherit;font-size:16px;font-weight:650;border:2px dashed var(--teal);background:var(--tealsoft);
+  color:var(--teal);border-radius:12px;cursor:pointer}
+.bigshot.has{min-height:58px;font-size:14.5px;border-style:solid;background:#fff}
+.qf{padding:14px}
+.qf .grp{margin-bottom:15px}
+.qf .grp:last-child{margin-bottom:0}
+.qf .lbl{font-size:12.5px;font-weight:650;color:var(--ink3);margin-bottom:7px}
+.qf .lbl em{font-style:normal;color:var(--severo);font-weight:650}
+.inh{font-size:11.5px;color:var(--ink3);font-weight:400;font-style:italic}
+.exp{width:100%;text-align:left;font:inherit;font-size:14px;font-weight:650;color:var(--teal);
+  background:#F8FAF9;border:none;border-top:1px solid var(--rule2);padding:15px 14px;cursor:pointer;
+  display:flex;gap:9px;align-items:center}
+.exp .ar{display:inline-block;transition:transform .15s;font-size:12px}
+.exp[aria-expanded="true"] .ar{transform:rotate(90deg)}
+
+/* resumen */
+.mrow{display:flex;align-items:center;gap:9px;padding:9px 14px;border-bottom:1px solid var(--rule2);font-size:14px}
+.mrow:last-child{border-bottom:none}
+.mrow .lb{flex:none;width:40%;color:var(--ink2);font-size:13.5px;line-height:1.25}
+.mrow .tr{flex:1;height:9px;background:#EDF0EF;border-radius:5px;overflow:hidden}
+.mrow .tr i{display:block;height:100%;background:var(--teal);border-radius:5px}
+.mrow .vn{flex:none;font-family:var(--mono);font-size:12px;color:var(--ink2);width:62px;text-align:right}
+.mrow[data-c="Leve"] .tr i{background:var(--leve)}
+.mrow[data-c="Moderado"] .tr i{background:var(--moderado)}
+.mrow[data-c="Severo"] .tr i{background:var(--severo)}
+.mrow[data-c="Grave"] .tr i{background:var(--grave)}
+.mrow[data-c="Sísmico"] .tr i{background:var(--severo)}
+.mrow[data-c="Preexistente"] .tr i{background:var(--ink3)}
+.mrow[data-c="Indeterminado"] .tr i{background:var(--moderado)}
+.mrow[data-c="Restringido"] .tr i{background:var(--grave)}
+.mrow[data-c="Uso inmediato"] .tr i{background:var(--leve)}
+.alert{background:#FCF0EF;border:1px solid #E8C9C7;border-radius:10px;padding:13px 14px;margin:14px 0}
+.alert h4{margin:0 0 5px;font-size:13.5px;color:var(--grave)}
+.alert p{margin:0;font-size:13.5px;color:var(--ink2)}
+.qc{font-size:14px;padding:11px 14px;border-bottom:1px solid var(--rule2);display:flex;gap:11px;align-items:baseline}
+.qc:last-child{border-bottom:none}
+.qc b{flex:none;font-family:var(--mono);font-size:13px;min-width:26px;text-align:right}
+.qc.ok b{color:var(--leve)}
+.qc.bad b{color:var(--severo)}
+.qc.bad span{color:var(--ink)}
+.qc.ok span{color:var(--ink3)}
+
+/* impresión */
+#print{display:none}
+@media print{
+  body{background:#fff;font-size:10.5pt}
+  .app,.topbar,.crumb,.actionbar,.notice,.conf,.tabs{display:none!important}
+  #print{display:block!important}
+  .cedula{page-break-after:always;padding:0;position:relative}
+  .cedula:last-child{page-break-after:auto}
+  @page{size:letter portrait;margin:14mm 13mm 18mm}
+}
+#print .cedula{max-width:700px;margin:0 auto 26px;background:#fff;padding:18px;border:1px solid #999}
+.ch{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2.5px solid var(--teal);padding-bottom:8px;margin-bottom:10px}
+.ch .l{font-size:9.5pt;line-height:1.35}
+.ch .l b{font-size:11.5pt;display:block}
+.ch .r{text-align:right}
+.ch .r .code{font-family:var(--mono);font-size:15pt;font-weight:700;letter-spacing:.03em;display:block}
+.ch .r .sev{display:inline-block;color:#fff;font-size:9pt;font-weight:700;padding:2px 9px;border-radius:3px;margin-top:3px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 16px}
+.kv{display:flex;gap:7px;font-size:9.5pt;padding:3.5px 0;border-bottom:1px dotted #C9D0CE;align-items:baseline}
+.kv .k{color:#55635F;flex:none;width:36%;font-weight:600}
+.kv .v{flex:1}
+.blk{margin-top:11px}
+.blk h4{font-size:9pt;font-weight:700;color:var(--teal);margin:0 0 5px;padding-bottom:3px;border-bottom:1px solid var(--rule)}
+.blk p{margin:0;font-size:9.5pt;line-height:1.42}
+.pgrid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:7px}
+.pgrid figure{margin:0}
+.pgrid img{width:100%;height:118px;object-fit:cover;border:1px solid #B9C2BF}
+.pgrid figcaption{font-size:8pt;color:#4A5956;padding-top:3px;line-height:1.3}
+.cf{margin-top:14px;padding-top:7px;border-top:1px solid #B9C2BF;font-size:7.5pt;color:#55635F;line-height:1.4}
+.wm{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;
+  font-size:40pt;font-weight:800;color:rgba(20,81,77,.06);transform:rotate(-28deg);letter-spacing:.06em;overflow:hidden}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+<meta name="robots" content="noindex, nofollow, noarchive">
+<meta name="theme-color" content="#14514D">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Mapeo">
+</head>
+<body>
+
+<div class="topbar">
+  <div class="wrap">
+    <button class="back hide" id="back" type="button" aria-label="Volver">‹</button>
+    <div class="tt"><h1 id="ttl">Mapeo estructural</h1><p id="sub">IACON S.A.S. — TERRAM CyC</p></div>
+    <button class="syncdot" id="syncBtn" type="button">local</button>
+  </div>
+</div>
+<div class="crumb"><div class="wrap" id="crumb">Proyectos abiertos</div></div>
+<div class="notice" id="notice"><div class="wrap" id="noticeTxt"></div></div>
+
+<div class="app" id="app"></div>
+<div class="actionbar hide" id="abar"><div class="wrap" id="abarIn"></div></div>
+<div class="conf" id="confbar">Documento de circulación restringida · © 2026 IACON S.A.S. — TERRAM Consultoría y Construcción S.A.S.</div>
+
+<div id="print"></div>
+
+<input type="file" id="fPhoto" accept="image/*" capture="environment" multiple class="sr">
+<input type="file" id="fPlano" accept="image/*" class="sr">
+<input type="file" id="fImport" accept="application/json" class="sr">
+
+<script>
+(function(){
+"use strict";
+var $=function(i){return document.getElementById(i)};
+var esc=function(s){return String(s==null?"":s).replace(/[<>&"]/g,function(c){return{"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[c]})};
+var uid=function(p){return (p||"x")+"_"+Date.now().toString(36)+Math.random().toString(36).slice(2,7)};
+
+/* ========== catálogos ========== */
+var C={
+ sistema:["","Pórticos de concreto reforzado","Muros estructurales de concreto","Sistema combinado o dual",
+   "Mampostería confinada","Mampostería estructural reforzada","Mampostería no reforzada","Pórticos de acero","Bahareque o tapia","Mixto"],
+ material:["","Concreto reforzado","Mampostería confinada","Mampostería no reforzada","Acero estructural","Madera","Sistema mixto"],
+ cimentacion:["","Zapatas aisladas","Zapatas combinadas","Vigas de cimentación","Losa de cimentación","Pilotes","Ciclópeo","Desconocida"],
+ entrepiso:["","Losa maciza","Losa aligerada en una dirección","Losa aligerada en dos direcciones","Losa con steel deck","Entrepiso en madera","Desconocido"],
+ cubierta:["","Losa de concreto","Estructura metálica con teja","Cercha en madera","Teja sobre muros","Mixta"],
+ norma:["","NSR-10","NSR-98","CCCSR-84","Anterior a 1984","Sin norma identificada"],
+ irregular:["Piso flexible","Piso débil","Columna corta","Irregularidad torsional","Retroceso en esquina","Discontinuidad en el diafragma",
+   "Desplazamiento de los planos de acción","Golpeteo con edificación vecina","Ampliación adosada sin junta"],
+ tipoEl:["","Columna","Viga","Nudo viga-columna","Muro estructural","Losa o entrepiso","Escalera","Cubierta estructural","Cimentación",
+   "Muro divisorio en mampostería","Fachada o antepecho","Cielo raso","Enchape o baldosa","Revoque","Ventanería o vidrio","Instalación suspendida"],
+ tipoDano:["","Fisura","Grieta pasante","Desprendimiento de recubrimiento","Aplastamiento del concreto","Pandeo del refuerzo",
+   "Refuerzo expuesto","Desplome o inclinación","Desplazamiento de junta","Asentamiento","Colapso parcial","Desprendimiento del elemento","Sin daño aparente"],
+ patron:["","Diagonal — cortante","En X — cortante cíclico","Horizontal — flexión o deslizamiento","Vertical — compresión",
+   "Concentrado en el nudo","En esquina de vano","Mapeo o retracción","Sobre junta constructiva","Interfaz muro-pórtico","No aplica"],
+ ancho:["","Menor a 0,2 mm","0,2 a 1,0 mm","1,0 a 2,0 mm","2,0 a 5,0 mm","Mayor a 5,0 mm"],
+ severidad:["Leve","Moderado","Severo","Grave"],
+ origen:["Sísmico","Preexistente","Indeterminado"],
+ habil:["Uso inmediato","Previa adecuación","Restringido"],
+ apun:["No requiere","Requiere ya"],
+ indSis:["Bordes frescos y vivos","Sin polvo ni suciedad interna","Corta pintura o acabado continuo",
+   "Material desprendido reciente en piso","Patrón consistente con la dirección del sismo","Sin reparación previa visible"],
+ indPre:["Fisura con polvo o suciedad interna","Pintada o resanada previamente","Eflorescencia o rastro de humedad",
+   "Corrosión avanzada del refuerzo","Deterioro por intemperismo","Geometría de retracción o térmica"],
+ patologia:["Humedad o filtración","Eflorescencia","Corrosión del refuerzo","Carbonatación aparente",
+   "Hormigueros o segregación","Recubrimiento insuficiente","Desgaste superficial","Ataque biológico"],
+ ensayos:["Núcleo de concreto","Esclerometría","Ultrasonido","Carbonatación","Regata de inspección","Pachómetro","Apique a cimentación"],
+ tipoEval:["","Tipo 1 — Reconocimiento detallado","Tipo 2 — Vulnerabilidad y patología estructural"]
+};
+
+/* ========== estado ========== */
+var S={proyectos:[],sedes:[],fichas:[],route:{v:"proyectos"},tab:"fichas",gh:{owner:"",repo:"",branch:"main",path:"datos",token:""},insp:{codigo:"",serie:1},seqs:{},
+  usuario:"",shots:[],placing:false,syncMode:"local",busy:false};
+
+/* ========== IndexedDB ========== */
+var DB=null;
+function openDB(){return new Promise(function(res){
+  try{ if(!window.indexedDB) return res(null);
+    var r=indexedDB.open("mapeo_iacon_terram",1);
+    r.onupgradeneeded=function(e){var d=e.target.result;
+      ["proyectos","sedes","fichas"].forEach(function(n){if(!d.objectStoreNames.contains(n))d.createObjectStore(n,{keyPath:"id"})});
+      if(!d.objectStoreNames.contains("meta"))d.createObjectStore("meta")};
+    r.onsuccess=function(e){res(e.target.result)}; r.onerror=function(){res(null)};
+    setTimeout(function(){res(null)},2500);
+  }catch(e){res(null)}})}
+function all(n){return new Promise(function(res){ if(!DB)return res([]);
+  try{var t=DB.transaction(n,"readonly").objectStore(n).getAll();
+    t.onsuccess=function(){res(t.result||[])};t.onerror=function(){res([])}}catch(e){res([])}})}
+function put(n,o){ if(!DB)return; try{DB.transaction(n,"readwrite").objectStore(n).put(o)}catch(e){} }
+function del(n,id){ if(!DB)return; try{DB.transaction(n,"readwrite").objectStore(n).delete(id)}catch(e){} }
+function mset(k,v){ if(!DB)return; try{DB.transaction("meta","readwrite").objectStore("meta").put(v,k)}catch(e){} }
+function mget(k){return new Promise(function(res){ if(!DB)return res(null);
+  try{var t=DB.transaction("meta","readonly").objectStore("meta").get(k);
+    t.onsuccess=function(){res(t.result||null)};t.onerror=function(){res(null)}}catch(e){res(null)}})}
+
+/* ========== sincronización ========== */
+function hasSync(){return !!(window.storage&&window.storage.set)}
+function sleep(ms){return new Promise(function(r){setTimeout(r,ms)})}
+async function pushAll(){
+  if(!hasSync()){flash("Este equipo trabaja solo en modo local. Comparte por archivo de respaldo.");return}
+  S.busy=true; paintSync("subiendo");
+  var items=[].concat(
+    S.proyectos.filter(function(x){return x._d}).map(function(x){return["p:"+x.id,x,"proyectos"]}),
+    S.sedes.filter(function(x){return x._d}).map(function(x){return["s:"+x.id,x,"sedes"]}),
+    S.fichas.filter(function(x){return x._d}).map(function(x){return["f:"+x.sedeId+":"+x.id,x,"fichas"]}));
+  if(!items.length){S.busy=false;paintSync();flash("No hay cambios pendientes por subir.");return}
+  var ok=0,fail=0;
+  for(var i=0;i<items.length;i++){
+    try{ await window.storage.set(items[i][0],JSON.stringify(items[i][1]),true);
+      items[i][1]._d=false; put(items[i][2],items[i][1]); ok++;
+    }catch(e){fail++}
+    await sleep(120);
+  }
+  S.busy=false; paintSync();
+  flash(ok+" elementos sincronizados"+(fail?", "+fail+" no se pudieron subir. Reintenta con señal estable.":"."));
+  render();
+}
+async function pullAll(){
+  if(!hasSync()){flash("Este equipo trabaja solo en modo local.");return}
+  S.busy=true; paintSync("bajando");
+  var got=0;
+  try{
+    for(var pre of [["p:","proyectos"],["s:","sedes"],["f:","fichas"]]){
+      var ks=await window.storage.list(pre[0],true);
+      var keys=(ks&&ks.keys)||[];
+      for(var k of keys){
+        try{ var r=await window.storage.get(k,true); if(!r)continue;
+          var o=JSON.parse(r.value); o._d=false;
+          var arr=S[pre[1]], j=arr.map(function(x){return x.id}).indexOf(o.id);
+          var mine=j>=0?arr[j]:null;
+          if(!mine || (o.ts||"")>(mine.ts||"")){ if(j>=0)arr[j]=o; else arr.push(o); put(pre[1],o); got++ }
+        }catch(e){}
+        await sleep(60);
+      }
+    }
+  }catch(e){}
+  S.busy=false; paintSync();
+  flash(got?got+" elementos actualizados desde el repositorio compartido.":"Todo estaba al día.");
+  render();
+}
+function paintSync(st){
+  var b=$("syncBtn");
+  if(st){b.textContent=st;return}
+  if(ghOn()){
+    var q=S.proyectos.concat(S.sedes,S.fichas).filter(function(x){return x._d}).length;
+    b.textContent=q?("git ↑"+q):"git ✓"; return;
+  }
+  if(!hasSync()){b.textContent="local";return}
+  var p=S.proyectos.concat(S.sedes,S.fichas).filter(function(x){return x._d}).length;
+  b.textContent=p?("↑ "+p):"al día";
+}
+$("syncBtn").addEventListener("click",function(){
+  if(S.busy)return;
+  var pend=S.proyectos.concat(S.sedes,S.fichas).filter(function(x){return x._d}).length;
+  if(ghOn()){
+    if(confirm(pend?("Subir "+pend+" cambios al repositorio y traer lo del equipo?"):"Traer lo que haya subido el equipo?")) ghSync();
+    return;
+  }
+  if(!hasSync()){flash("Configura el repositorio GitHub en la pantalla de proyectos, o usa exportar e importar respaldo.");return}
+  if(confirm(pend?("Subir "+pend+" cambios y traer lo del equipo?"):"Traer lo que hayan subido los demás?")){
+    pushAll().then(pullAll);
+  }
+});
+
+
+/* ========== repositorio GitHub ========== */
+function ghOn(){return !!(S.gh&&S.gh.owner&&S.gh.repo&&S.gh.token)}
+function ghBase(){return "https://api.github.com/repos/"+S.gh.owner+"/"+S.gh.repo}
+function ghH(x){
+  var o={"Accept":"application/vnd.github+json","X-GitHub-Api-Version":"2022-11-28"};
+  if(S.gh.token)o["Authorization"]="Bearer "+S.gh.token;
+  if(x)for(var k in x)o[k]=x[k];
+  return o;
+}
+function sb64(s){var b=new TextEncoder().encode(s),x="";
+  for(var i=0;i<b.length;i+=0x8000)x+=String.fromCharCode.apply(null,b.subarray(i,i+0x8000));return btoa(x)}
+function b64s(c){var r=atob(String(c).replace(/\s/g,"")),u=new Uint8Array(r.length);
+  for(var i=0;i<r.length;i++)u[i]=r.charCodeAt(i);return new TextDecoder().decode(u)}
+function ghRoot(){return String(S.gh.path||"datos").replace(/^\/+|\/+$/g,"")}
+function ghPath(kind,o){
+  var r=ghRoot();
+  if(kind==="proyectos")return r+"/proyectos/"+o.id+".json";
+  if(kind==="sedes")return r+"/sedes/"+o.id+".json";
+  return r+"/fichas/"+o.sedeId+"/"+o.id+".json";
+}
+async function ghTree(){
+  var r=await fetch(ghBase()+"/git/trees/"+encodeURIComponent(S.gh.branch||"main")+"?recursive=1",{headers:ghH()});
+  if(r.status===409)return {};
+  if(r.status===401||r.status===403)throw new Error("El token no tiene acceso a ese repositorio.");
+  if(r.status===404)throw new Error("No se encontró el repositorio. Revisa usuario, nombre y rama.");
+  if(!r.ok)throw new Error("GitHub respondió "+r.status);
+  var d=await r.json(),m={};
+  (d.tree||[]).forEach(function(t){if(t.type==="blob")m[t.path]=t.sha});
+  return m;
+}
+async function ghBlob(sha){
+  var r=await fetch(ghBase()+"/git/blobs/"+sha,{headers:ghH()});
+  if(!r.ok)throw new Error("blob "+r.status);
+  var d=await r.json(); return b64s(d.content||"");
+}
+async function ghPutFile(path,text,sha){
+  var body={message:"mapeo · "+path.split("/").pop()+" · "+(S.usuario||"equipo"),
+    content:sb64(text),branch:S.gh.branch||"main"};
+  if(sha)body.sha=sha;
+  var r=await fetch(ghBase()+"/contents/"+path.split("/").map(encodeURIComponent).join("/"),
+    {method:"PUT",headers:ghH({"Content-Type":"application/json"}),body:JSON.stringify(body)});
+  if(!r.ok){
+    var t=await r.text();
+    if(r.status===401||r.status===403)
+      throw new Error("El token no tiene permiso de escritura. En GitHub: Settings > Developer settings > Fine-grained tokens > tu token > Permissions > Contents = Read and write. Si el repositorio es de una organización, además debe habilitar los tokens de grano fino.");
+    if(r.status===404)
+      throw new Error("No se encontró la rama \""+(S.gh.branch||"main")+"\" en el repositorio. Revisa el nombre de la rama.");
+    if(r.status===409||r.status===422)
+      throw new Error("Conflicto al escribir un archivo. Vuelve a sincronizar.");
+    if(r.status===413)
+      throw new Error("Una ficha pesa demasiado para subirla. Reduce el número de fotografías de esa ficha.");
+    throw new Error("GitHub respondió "+r.status+" · "+t.slice(0,140));
+  }
+  var d=await r.json(); return d.content&&d.content.sha;
+}
+function limpio(o){var c=JSON.parse(JSON.stringify(o));delete c._d;delete c._sha;return c}
+async function ghSync(){
+  if(!ghOn()){flash("Falta configurar el repositorio en la pantalla de proyectos.");return}
+  if(S.busy)return; S.busy=true;
+  var subidos=0,bajados=0,fallos=0,tree,err="";
+  try{
+    paintSync("leyendo");
+    tree=await ghTree();
+  }catch(e){ S.busy=false; paintSync(); flash(e.message); return }
+
+  /* subir lo propio */
+  var items=[].concat(
+    S.proyectos.filter(function(x){return x._d}).map(function(x){return["proyectos",x]}),
+    S.sedes.filter(function(x){return x._d}).map(function(x){return["sedes",x]}),
+    S.fichas.filter(function(x){return x._d}).map(function(x){return["fichas",x]}));
+  for(var i=0;i<items.length;i++){
+    paintSync("↑ "+(items.length-i));
+    var kind=items[i][0],o=items[i][1],pa=ghPath(kind,o);
+    try{
+      var nsha=await ghPutFile(pa,JSON.stringify(limpio(o)),tree[pa]||o._sha||null);
+      o._d=false; o._sha=nsha; tree[pa]=nsha; put(kind,o); subidos++;
+    }catch(e){fallos++; if(!err)err=e.message}
+    await sleep(90);
+  }
+
+  /* bajar lo del equipo: solo archivos cuyo sha cambió */
+  var mios={}; 
+  S.proyectos.forEach(function(x){mios[ghPath("proyectos",x)]=x});
+  S.sedes.forEach(function(x){mios[ghPath("sedes",x)]=x});
+  S.fichas.forEach(function(x){mios[ghPath("fichas",x)]=x});
+  var pend=Object.keys(tree).filter(function(pa){
+    if(pa.indexOf(ghRoot()+"/")!==0||!/\.json$/.test(pa))return false;
+    var m=mios[pa]; return !m || m._sha!==tree[pa];
+  });
+  for(var j=0;j<pend.length;j++){
+    paintSync("↓ "+(pend.length-j));
+    var pa2=pend[j];
+    try{
+      var o2=JSON.parse(await ghBlob(tree[pa2]));
+      var kind2=/\/proyectos\//.test(pa2)?"proyectos":(/\/sedes\//.test(pa2)?"sedes":"fichas");
+      o2._d=false; o2._sha=tree[pa2];
+      var arr=S[kind2],k=arr.map(function(x){return x.id}).indexOf(o2.id);
+      var mine=k>=0?arr[k]:null;
+      if(!mine||(o2.ts||"")>=(mine.ts||"")){ if(k>=0)arr[k]=o2; else arr.push(o2); put(kind2,o2); bajados++ }
+      else if(mine){ mine._sha=tree[pa2]; put(kind2,mine) }
+    }catch(e){fallos++; if(!err)err=e.message}
+    await sleep(70);
+  }
+  S.busy=false; paintSync();
+  if(fallos&&err) flash("Fallaron "+fallos+" de "+(items.length+pend.length)+". Motivo: "+err,true);
+  else flash("Sincronizado · "+subidos+" subidos, "+bajados+" recibidos.");
+  render();
+}
+async function ghProbar(){
+  try{ var t=await ghTree();
+    var n=Object.keys(t).filter(function(x){return /\.json$/.test(x)}).length;
+    flash("Conexión correcta. El repositorio tiene "+n+" archivos de datos.");
+  }catch(e){ flash(e.message) }
+}
+
+/* ========== utilidades ========== */
+var tmr=null;
+function flash(m,keep){
+  $("noticeTxt").textContent=m; $("notice").style.display="block";
+  clearTimeout(tmr); if(!keep) tmr=setTimeout(function(){$("notice").style.display="none"},5200);
+}
+function shrink(file,max,q){return new Promise(function(res,rej){
+  var fr=new FileReader();
+  fr.onload=function(){var img=new Image();
+    img.onload=function(){var M=max||1400,w=img.width,h=img.height;
+      if(Math.max(w,h)>M){var k=M/Math.max(w,h);w=Math.round(w*k);h=Math.round(h*k)}
+      var cv=document.createElement("canvas");cv.width=w;cv.height=h;
+      cv.getContext("2d").drawImage(img,0,0,w,h);res({src:cv.toDataURL("image/jpeg",q||0.7),w:w,h:h})};
+    img.onerror=rej;img.src=fr.result};
+  fr.onerror=rej;fr.readAsDataURL(file)})}
+function dl(name,blob){var u=URL.createObjectURL(blob),a=document.createElement("a");
+  a.href=u;a.download=name;document.body.appendChild(a);a.click();
+  setTimeout(function(){URL.revokeObjectURL(u);a.remove()},600)}
+function stamp(){var d=new Date();return d.toISOString().slice(0,10)}
+function sel(id,arr,v){return '<select id="'+id+'">'+arr.map(function(o){
+  return '<option value="'+esc(o)+'"'+(o===v?" selected":"")+'>'+esc(o||"Selecciona")+'</option>'}).join("")+'</select>'}
+function seg(id,arr,v,cls){return '<div class="seg '+(cls||"c3")+'" id="'+id+'">'+arr.map(function(o){
+  return '<button type="button" data-v="'+esc(o)+'" aria-pressed="'+(o===v?"true":"false")+'">'+esc(o)+'</button>'}).join("")+'</div>'}
+function checks(id,arr,v){v=v||[];return '<div class="checks" id="'+id+'">'+arr.map(function(o){
+  return '<label><input type="checkbox" value="'+esc(o)+'"'+(v.indexOf(o)>=0?" checked":"")+'><span>'+esc(o)+'</span></label>'}).join("")+'</div>'}
+function gv(id){var e=$(id);return e?e.value:""}
+function gseg(id){var e=$(id);if(!e)return"";var b=e.querySelector('button[aria-pressed="true"]');return b?b.dataset.v:""}
+function gchk(id){var e=$(id);if(!e)return[];return Array.prototype.filter.call(e.querySelectorAll("input"),function(i){return i.checked}).map(function(i){return i.value})}
+document.addEventListener("click",function(e){
+  var b=e.target.closest(".seg button"); if(!b)return;
+  var c=b.parentNode, on=b.getAttribute("aria-pressed")==="true";
+  Array.prototype.forEach.call(c.querySelectorAll("button"),function(x){x.setAttribute("aria-pressed","false")});
+  b.setAttribute("aria-pressed",on?"false":"true");
+});
+
+/* ========== consultas ========== */
+function proj(id){return S.proyectos.filter(function(x){return x.id===id})[0]}
+function sede(id){return S.sedes.filter(function(x){return x.id===id})[0]}
+function ficha(id){return S.fichas.filter(function(x){return x.id===id})[0]}
+function sedesDe(pid){return S.sedes.filter(function(x){return x.proyectoId===pid})}
+function fichasDe(sid){return S.fichas.filter(function(x){return x.sedeId===sid}).sort(function(a,b){return a.consec-b.consec})}
+function conteo(sid){var f=fichasDe(sid),o={Leve:0,Moderado:0,Severo:0,Grave:0};
+  f.forEach(function(x){if(o[x.severidad]!==undefined)o[x.severidad]++});return o}
+
+/* ========== navegación ========== */
+function go(r){S.route=r; if(r.v==="sede")S.tab=r.tab||"fichas"; window.scrollTo(0,0); render()}
+$("back").addEventListener("click",function(){
+  var r=S.route;
+  if(r.v==="ficha") go({v:"sede",pid:r.pid,sid:r.sid,tab:"fichas"});
+  else if(r.v==="sede") go({v:"proyecto",pid:r.pid});
+  else if(r.v==="proyecto"||r.v==="ajustes") go({v:"proyectos"});
+  else go({v:"proyectos"});
+});
+
+/* ========== vistas ========== */
+function render(){
+  var r=S.route, a=$("app"), ab=$("abarIn");
+  $("back").classList.toggle("hide",r.v==="proyectos");
+  $("abar").classList.add("hide"); ab.innerHTML="";
+  paintSync();
+  if(r.v==="proyectos") viewProyectos(a,ab);
+  else if(r.v==="proyecto") viewProyecto(a,ab);
+  else if(r.v==="sede") viewSede(a,ab);
+  else if(r.v==="ficha") viewFicha(a,ab);
+  else if(r.v==="ajustes") viewAjustes(a,ab);
+}
+
+function head(t,s,c){$("ttl").textContent=t;$("sub").textContent=s||"";$("crumb").innerHTML=c||""}
+
+/* --- proyectos --- */
+function viewProyectos(a,ab){
+  head("Proyectos","IACON S.A.S. — TERRAM CyC","<b>Proyectos abiertos</b>");
+  var h='<div class="wrap">';
+  h+='<section><h2>Abiertos</h2>';
+  if(!S.proyectos.length) h+='<p class="empty">No hay proyectos. Crea el primero con el botón de abajo.</p>';
+  else h+=S.proyectos.map(function(p){
+    var sd=sedesDe(p.id), nf=S.fichas.filter(function(f){return f.proyectoId===p.id}).length;
+    return '<div class="item" data-go=\'{"v":"proyecto","pid":"'+p.id+'"}\'><div class="bar" style="background:var(--teal)"></div>'+
+      '<div class="txt"><div class="code">'+esc(p.codigo)+'</div><div class="ttl">'+esc(p.nombre)+'</div>'+
+      '<div class="sub">'+esc(p.cliente||"Sin cliente")+'</div></div>'+
+      '<div class="n">'+sd.length+' sedes<br>'+nf+' fichas</div></div>'}).join("");
+  h+='</section>';
+  h+='<section><h2>Equipo y datos</h2><div class="body">'+
+    '<div class="field"><label for="usuario">Quién diligencia en este equipo</label>'+
+    '<p class="hint">Aparece en cada ficha y como marca de agua en las cédulas impresas. Un documento filtrado se rastrea.</p>'+
+    '<input type="text" id="usuario" value="'+esc(S.usuario)+'" placeholder="Nombre y apellido"></div>'+
+    '<div class="row field"><div><label for="inspCod">Código de inspector</label>'+
+    '<input type="text" id="inspCod" class="mono" maxlength="3" value="'+esc(S.insp.codigo)+'" placeholder="JM"></div>'+
+    '<div><label for="inspSerie">Serie inicial</label>'+
+    '<input type="number" id="inspSerie" class="mono" value="'+esc(S.insp.serie||1)+'" min="1"></div></div>'+
+    '<p class="hint" style="margin:-4px 0 14px">Dos o tres letras que identifican a quien levanta, y el número en que arranca su numeración. El coordinador asigna una serie distinta a cada persona de la sede (1, 501, 1001) para que los códigos y los pines del plano nunca se repitan.</p>'+
+    '<div class="tools"><button class="btn small" id="bExpJson">Exportar respaldo</button>'+
+    '<button class="btn small ghost" id="bImp">Importar respaldo</button>'+
+    '<button class="btn small ghost" id="bExpCsv">Exportar CSV global</button></div>'+
+    '<p class="hint" style="margin:11px 0 0">El respaldo lleva fotos y planos. Es el canal seguro cuando no hay repositorio compartido.</p>'+
+    '</div></section>'+
+    '<section><h2>Repositorio compartido (GitHub)</h2><div class="body">'+
+    '<p class="hint" style="margin-top:0">Con esto lo que levanta cada cuadrilla se consolida solo. Usa un repositorio <b>privado</b>: cada ficha queda como un archivo aparte, así que dos personas nunca se pisan.</p>'+
+    '<div class="row field"><div><label for="ghOwner">Usuario u organización</label><input type="text" id="ghOwner" class="mono" value="'+esc(S.gh.owner)+'" placeholder="terram-cyc"></div>'+
+    '<div><label for="ghRepo">Repositorio</label><input type="text" id="ghRepo" class="mono" value="'+esc(S.gh.repo)+'" placeholder="mapeo-datos"></div></div>'+
+    '<div class="row field"><div><label for="ghBranch">Rama</label><input type="text" id="ghBranch" class="mono" value="'+esc(S.gh.branch||"main")+'"></div>'+
+    '<div><label for="ghPath">Carpeta</label><input type="text" id="ghPath" class="mono" value="'+esc(S.gh.path||"datos")+'"></div></div>'+
+    '<div class="field"><label for="ghToken">Token de acceso</label>'+
+    '<p class="hint">Token de grano fino con permiso de <b>Contents: read and write</b> sobre ese repositorio. Queda guardado solo en este dispositivo y nunca se sube. Si se pierde el equipo, revócalo desde GitHub.</p>'+
+    '<input type="text" id="ghToken" class="mono" value="'+esc(S.gh.token)+'" placeholder="github_pat_..." autocomplete="off" spellcheck="false"></div>'+
+    '<div class="tools"><button class="btn small" id="bGhSave">Guardar configuración</button>'+
+    '<button class="btn small ghost" id="bGhTest">Probar conexión</button>'+
+    '<button class="btn small ghost" id="bGhSync">Sincronizar ahora</button></div>'+
+    '</div></section></div>';
+  a.innerHTML=h;
+  $("usuario").addEventListener("change",function(){S.usuario=this.value;mset("usuario",this.value)});
+  function guardaInsp(){
+    S.insp={codigo:gv("inspCod").toUpperCase().replace(/[^A-Z0-9]/g,"").slice(0,3),
+            serie:Math.max(1,parseInt(gv("inspSerie"),10)||1)};
+    $("inspCod").value=S.insp.codigo; mset("insp",S.insp);
+  }
+  $("inspCod").addEventListener("change",guardaInsp);
+  $("inspSerie").addEventListener("change",guardaInsp);
+  $("bExpJson").onclick=expJson; $("bImp").onclick=function(){$("fImport").click()}; $("bExpCsv").onclick=function(){expCsv(null)};
+  $("bGhSave").onclick=function(){
+    S.gh={owner:gv("ghOwner").trim(),repo:gv("ghRepo").trim(),branch:gv("ghBranch").trim()||"main",
+      path:gv("ghPath").trim()||"datos",token:gv("ghToken").trim()};
+    mset("gh",S.gh); paintSync();
+    flash(ghOn()?"Repositorio configurado. Prueba la conexión antes de ir a campo.":"Faltan datos del repositorio.");
+  };
+  $("bGhTest").onclick=function(){
+    S.gh={owner:gv("ghOwner").trim(),repo:gv("ghRepo").trim(),branch:gv("ghBranch").trim()||"main",
+      path:gv("ghPath").trim()||"datos",token:gv("ghToken").trim()};
+    if(!ghOn()){flash("Completa usuario, repositorio y token.");return}
+    mset("gh",S.gh); ghProbar();
+  };
+  $("bGhSync").onclick=function(){ if(!ghOn()){flash("Guarda primero la configuración.");return} ghSync() };
+  $("abar").classList.remove("hide");
+  ab.innerHTML='<button class="btn primary" id="bNewP">Nuevo proyecto</button>';
+  $("bNewP").onclick=newProyecto;
+}
+function newProyecto(){
+  var n=prompt("Nombre del proyecto"); if(!n)return;
+  var c=prompt("Código corto (aparece en cada ficha)","C"+(S.proyectos.length+1)); if(!c)return;
+  var cl=prompt("Cliente o contratante")||"";
+  var p={id:uid("p"),codigo:c.toUpperCase().trim(),nombre:n.trim(),cliente:cl.trim(),
+    contratistas:"IACON S.A.S. — TERRAM Consultoría y Construcción S.A.S.",
+    creado:new Date().toISOString(),ts:new Date().toISOString(),_d:true};
+  S.proyectos.push(p); put("proyectos",p); go({v:"proyecto",pid:p.id});
+}
+
+/* --- proyecto --- */
+function viewProyecto(a,ab){
+  var p=proj(S.route.pid); if(!p)return go({v:"proyectos"});
+  head(p.nombre,p.codigo+" · "+(p.cliente||""),"<b>"+esc(p.nombre)+"</b>");
+  var sd=sedesDe(p.id);
+  var h='<div class="wrap"><section><h2>Sedes</h2>';
+  if(!sd.length) h+='<p class="empty">Agrega la primera sede. Un proyecto puede tener todas las que necesite.</p>';
+  else h+=sd.map(function(s){
+    var c=conteo(s.id), nf=fichasDe(s.id).length;
+    var peor=c.Grave?"Grave":c.Severo?"Severo":c.Moderado?"Moderado":c.Leve?"Leve":"";
+    return '<div class="item" data-s="'+peor+'" data-go=\'{"v":"sede","pid":"'+p.id+'","sid":"'+s.id+'"}\'>'+
+      '<div class="bar"></div><div class="txt"><div class="code">'+esc(s.codigo)+'</div>'+
+      '<div class="ttl">'+esc(s.nombre)+'</div><div class="sub">'+esc(s.tipoEval||"Sin tipo de evaluación")+
+      (s.estructura&&s.estructura.sistema?" · "+esc(s.estructura.sistema):" · ficha de estructura pendiente")+'</div></div>'+
+      '<div class="n">'+nf+' fichas'+(s.plano?"<br>con plano":"")+'</div></div>'}).join("");
+  h+='</section>';
+  var tp=resumenProyecto(p);
+  h+='<section><h2>Consolidado del proyecto</h2>';
+  if(!tp.total) h+='<p class="empty">Sin fichas todavía. El consolidado se arma con lo que levanten las cuadrillas.</p>';
+  else{
+    h+='<div class="stats">'+
+      '<div class="stat"><b>'+tp.total+'</b><span>Fichas</span></div>'+
+      '<div class="stat"><b>'+tp.porSede.length+'</b><span>Sedes</span></div>'+
+      '<div class="stat severo"><b>'+((tp.sev["Grave"]||0)+(tp.sev["Severo"]||0))+'</b><span>Graves y severos</span></div>'+
+      '<div class="stat"><b>'+Math.round((tp.orig["Sísmico"]||0)*100/tp.total)+'%</b><span>Sísmico</span></div></div>'+
+      bars(tp.sev,tp.total)+
+      '<div class="body" style="border-top:1px solid var(--rule2)"><div class="tools">'+
+      '<button class="btn small" id="bPrP">Imprimir consolidado</button>'+
+      '<button class="btn small ghost" id="bPrPC">Consolidado con cédulas</button></div>'+
+      '<p class="hint" style="margin:11px 0 0">El consolidado trae la portada, las cifras del proyecto y el resumen de cada sede. La versión con cédulas agrega las '+tp.total+' fichas completas: úsala solo para el expediente, no para circular.</p></div>';
+  }
+  h+='</section>';
+  h+='<section><h2>Datos del contrato</h2><div class="body">'+
+    '<div class="field"><label for="pCliente">Contratante</label><input type="text" id="pCliente" value="'+esc(p.cliente)+'"></div>'+
+    '<div class="field"><label for="pContr">Contratistas</label><input type="text" id="pContr" value="'+esc(p.contratistas)+'"></div>'+
+    '<div class="field" style="margin-bottom:0"><label for="pNotas">Notas</label><textarea id="pNotas">'+esc(p.notas||"")+'</textarea></div>'+
+    '<div class="tools" style="margin-top:12px"><button class="btn small" id="bSaveP">Guardar</button>'+
+    '<button class="btn small ghost" id="bCsvP">Exportar CSV del proyecto</button></div>'+
+    '</div></section></div>';
+  a.innerHTML=h;
+  $("bSaveP").onclick=function(){
+    p.cliente=gv("pCliente");p.contratistas=gv("pContr");p.notas=gv("pNotas");
+    p.ts=new Date().toISOString();p._d=true;put("proyectos",p);flash("Proyecto actualizado.");render()};
+  $("bCsvP").onclick=function(){expCsv(p.id)};
+  if($("bPrP")) $("bPrP").onclick=function(){imprimirProyecto(p,false)};
+  if($("bPrPC")) $("bPrPC").onclick=function(){
+    if(confirm("Va a generar un documento con las "+resumenProyecto(p).total+" cédulas del proyecto. Puede tardar y ser muy extenso. ¿Continuar?"))
+      imprimirProyecto(p,true)};
+  $("abar").classList.remove("hide");
+  ab.innerHTML='<button class="btn primary" id="bNewS">Agregar sede</button>';
+  $("bNewS").onclick=function(){newSede(p)};
+}
+function newSede(p){
+  var n=prompt("Nombre de la sede"); if(!n)return;
+  var c=prompt("Código de 3 letras","SED"); if(!c)return;
+  var s={id:uid("s"),proyectoId:p.id,nombre:n.trim(),codigo:c.toUpperCase().slice(0,4),direccion:"",
+    tipoEval:"",estructura:{},plano:null,next:1,ts:new Date().toISOString(),_d:true};
+  S.sedes.push(s); put("sedes",s); go({v:"sede",pid:p.id,sid:s.id,tab:"estructura"});
+}
+
+/* --- sede --- */
+function viewSede(a,ab){
+  var p=proj(S.route.pid), s=sede(S.route.sid); if(!p||!s)return go({v:"proyectos"});
+  head(s.nombre,p.codigo+"-"+s.codigo,"<b>"+esc(p.nombre)+"</b> &nbsp;·&nbsp; "+esc(s.nombre));
+  var h='<div class="tabs" role="tablist">'+
+    ['fichas','resumen','estructura','plano'].map(function(t){
+      var lbl={fichas:"Fichas",resumen:"Resumen E1",estructura:"Estructura",plano:"Plano"}[t];
+      return '<button role="tab" data-tab="'+t+'" aria-selected="'+(S.tab===t)+'">'+lbl+'</button>'}).join("")+'</div>';
+  h+='<div class="wrap">';
+  if(S.tab==="fichas") h+=tabFichas(p,s);
+  else if(S.tab==="estructura") h+=tabEstructura(p,s);
+  else if(S.tab==="resumen") h+=tabResumen(p,s);
+  else h+=tabPlano(p,s);
+  h+='</div>';
+  a.innerHTML=h;
+  Array.prototype.forEach.call(a.querySelectorAll(".tabs button"),function(b){
+    b.onclick=function(){S.tab=b.dataset.tab;window.scrollTo(0,0);render()}});
+  if(S.tab==="fichas"){
+    $("abar").classList.remove("hide");
+    ab.innerHTML='<button class="btn ghost" id="bPrint">Imprimir cédulas</button><button class="btn primary" id="bNewF">Nueva ficha</button>';
+    $("bNewF").onclick=function(){go({v:"ficha",pid:p.id,sid:s.id,fid:null})};
+    $("bPrint").onclick=function(){imprimir(p,s)};
+    $("bCsvS").onclick=function(){expCsv(p.id,s.id)};
+  }else if(S.tab==="resumen"){
+    $("abar").classList.remove("hide");
+    ab.innerHTML='<button class="btn ghost" id="bCsvR">Exportar CSV</button><button class="btn primary" id="bPrintR">Imprimir informe</button>';
+    $("bCsvR").onclick=function(){expCsv(p.id,s.id)};
+    $("bPrintR").onclick=function(){imprimir(p,s)};
+  }else if(S.tab==="estructura"){
+    $("bSaveE").onclick=function(){saveEstructura(s)};
+  }else{
+    $("bPlano").onclick=function(){$("fPlano").click()};
+    bindPlano(p,s);
+  }
+}
+function tabFichas(p,s){
+  var f=fichasDe(s.id), c=conteo(s.id);
+  var h='<section><h2>Resumen de daños</h2><div class="stats">'+
+    C.severidad.map(function(k){return '<div class="stat '+k.toLowerCase()+'"><b>'+c[k]+'</b><span>'+k+'</span></div>'}).join("")+
+    '</div></section>';
+  h+='<section><h2>Fichas levantadas ('+f.length+')</h2>';
+  if(!f.length) h+='<p class="empty">Sin fichas todavía. Llena primero la estructura de la sede: se hace una sola vez.</p>';
+  else h+=f.slice().reverse().map(function(x){
+    return '<div class="item" data-s="'+esc(x.severidad)+'" data-go=\'{"v":"ficha","pid":"'+p.id+'","sid":"'+s.id+'","fid":"'+x.id+'"}\'>'+
+      '<div class="bar"></div><div class="txt"><div class="code">'+esc(x.codigo)+(x.pin?' · en plano':'')+'</div>'+
+      '<div class="ttl">'+esc([x.tipoEl,x.rotulo].filter(Boolean).join(" ")||"Elemento sin identificar")+'</div>'+
+      '<div class="sub">'+esc([x.nivel,x.tipoDano,x.origen].filter(Boolean).join(" · "))+'</div></div>'+
+      '<div class="n">'+((x.fotos||[]).length)+' ph'+(x._d?'<br>↑':'')+'</div></div>'}).join("");
+  h+='</section><section><h2>Salidas</h2><div class="body"><div class="tools">'+
+    '<button class="btn small ghost" id="bCsvS">Exportar CSV de la sede</button></div>'+
+    '<p class="hint" style="margin:11px 0 0">Las cédulas se imprimen desde el botón inferior: una página por elemento, más el plano de localización.</p></div></section>';
+  return h;
+}
+/* --- resumen E1 --- */
+var ESTRUCT=["Columna","Viga","Nudo viga-columna","Muro estructural","Losa o entrepiso","Escalera","Cubierta estructural","Cimentación"];
+function resumen(s){
+  var f=fichasDe(s.id);
+  var r={total:f.length,sev:{},orig:{},hab:{},tipo:{},zona:{},ens:{},patol:{},
+    estruct:0,noEstruct:0,apuntala:[],restringido:[],muestras:[],sinFoto:0,sinSustento:0,sinPin:0};
+  C.severidad.forEach(function(k){r.sev[k]=0});
+  C.origen.forEach(function(k){r.orig[k]=0});
+  C.habil.forEach(function(k){r.hab[k]=0});
+  f.forEach(function(x){
+    if(r.sev[x.severidad]!==undefined)r.sev[x.severidad]++;
+    if(r.orig[x.origen]!==undefined)r.orig[x.origen]++;
+    if(r.hab[x.habilitacion]!==undefined)r.hab[x.habilitacion]++;
+    if(x.tipoEl){r.tipo[x.tipoEl]=(r.tipo[x.tipoEl]||0)+1;
+      if(ESTRUCT.indexOf(x.tipoEl)>=0)r.estruct++;else r.noEstruct++}
+    if(x.zona)r.zona[x.zona]=(r.zona[x.zona]||0)+1;
+    (x.ensayos||[]).forEach(function(e){r.ens[e]=(r.ens[e]||0)+1});
+    (x.patologia||[]).forEach(function(e){r.patol[e]=(r.patol[e]||0)+1});
+    if(x.apuntalamiento==="Requiere ya")r.apuntala.push(x);
+    if(x.habilitacion==="Restringido")r.restringido.push(x);
+    if(x.muestra)r.muestras.push(x);
+    if(!(x.fotos||[]).length)r.sinFoto++;
+    if(!x.sustento)r.sinSustento++;
+    if(!x.pin)r.sinPin++;
+  });
+  var vistos={}; r.dupes=0;
+  f.forEach(function(x){ if(vistos[x.consec])r.dupes++; vistos[x.consec]=1 });
+  return r;
+}
+function bars(obj,total){
+  var ks=Object.keys(obj).filter(function(k){return obj[k]>0});
+  if(!ks.length)return '<p class="empty">Sin datos registrados.</p>';
+  ks.sort(function(a,b){return obj[b]-obj[a]});
+  return ks.map(function(k){
+    var pc=total?Math.round(obj[k]*100/total):0;
+    return '<div class="mrow" data-c="'+esc(k)+'"><span class="lb">'+esc(k)+'</span>'+
+      '<span class="tr"><i style="width:'+pc+'%"></i></span>'+
+      '<span class="vn">'+obj[k]+' · '+pc+'%</span></div>'}).join("");
+}
+function qcRow(ok,n,txt){
+  return '<div class="qc '+(ok?"ok":"bad")+'"><b>'+(ok?"✓":n)+'</b><span>'+esc(txt)+'</span></div>';
+}
+function itemMini(p,s,x){
+  return '<div class="item" data-s="'+esc(x.severidad)+'" data-go=\'{"v":"ficha","pid":"'+p.id+'","sid":"'+s.id+'","fid":"'+x.id+'"}\'>'+
+    '<div class="bar"></div><div class="txt"><div class="code">'+esc(x.codigo)+'</div>'+
+    '<div class="ttl">'+esc([x.tipoEl,x.rotulo].filter(Boolean).join(" ")||"Elemento")+'</div>'+
+    '<div class="sub">'+esc([x.nivel,x.zona,x.tipoDano].filter(Boolean).join(" · "))+'</div></div>'+
+    '<div class="n">'+esc(x.severidad||"")+'</div></div>';
+}
+function tabResumen(p,s){
+  var r=resumen(s);
+  if(!r.total) return '<section><p class="empty">Todavía no hay fichas en esta sede. El resumen se arma solo, a medida que levantas.</p></section>';
+  var h='';
+  if(r.apuntala.length) h+='<div class="alert"><h4>'+r.apuntala.length+' elemento'+(r.apuntala.length>1?'s':'')+
+    ' requiere'+(r.apuntala.length>1?'n':'')+' apuntalamiento inmediato</h4>'+
+    '<p>Esto no espera al entregable. Se comunica al Supervisor el mismo día y por escrito.</p></div>';
+  h+='<section><h2>Alcance del levantamiento</h2><div class="stats">'+
+    '<div class="stat"><b>'+r.total+'</b><span>Fichas</span></div>'+
+    '<div class="stat"><b>'+r.estruct+'</b><span>Estructurales</span></div>'+
+    '<div class="stat"><b>'+r.noEstruct+'</b><span>No estructurales</span></div>'+
+    '<div class="stat"><b>'+r.muestras.length+'</b><span>Muestras</span></div></div></section>';
+  h+='<section><h2>Severidad</h2>'+bars(r.sev,r.total)+'</section>';
+  h+='<section><h2>Origen atribuido</h2>'+bars(r.orig,r.total)+
+    '<div class="body" style="border-top:1px solid var(--rule2)"><p class="hint" style="margin:0">'+
+    (r.total?Math.round((r.orig["Sísmico"]||0)*100/r.total):0)+
+    ' % del daño levantado se atribuye al sismo. Esa proporción es la que sustenta la reclamación ante la aseguradora.'+
+    ((r.orig["Indeterminado"]||0)?' Quedan '+r.orig["Indeterminado"]+' fichas indeterminadas: resuélvelas antes de radicar o quedarán del lado del Contratante.':'')+
+    '</p></div></section>';
+  h+='<section><h2>Concepto de habilitación</h2>'+bars(r.hab,r.total)+'</section>';
+  h+='<section><h2>Elementos afectados por tipo</h2>'+bars(r.tipo,r.total)+'</section>';
+  if(Object.keys(r.zona).length) h+='<section><h2>Distribución por zona o servicio</h2>'+bars(r.zona,r.total)+'</section>';
+  if(Object.keys(r.patol).length) h+='<section><h2>Patología preexistente recurrente</h2>'+bars(r.patol,r.total)+'</section>';
+  if(r.apuntala.length) h+='<section><h2>Apuntalamiento inmediato ('+r.apuntala.length+')</h2>'+
+    r.apuntala.map(function(x){return itemMini(p,s,x)}).join("")+'</section>';
+  if(r.restringido.length) h+='<section><h2>Deben permanecer restringidos ('+r.restringido.length+')</h2>'+
+    r.restringido.map(function(x){return itemMini(p,s,x)}).join("")+'</section>';
+  if(Object.keys(r.ens).length) h+='<section><h2>Programa de ensayos consolidado</h2>'+bars(r.ens,r.total)+
+    '<div class="body" style="border-top:1px solid var(--rule2)"><p class="hint" style="margin:0">'+
+    'Este conteo es el insumo para contratar el laboratorio y dimensionar las remesas. '+
+    r.muestras.length+' de los elementos tienen muestra identificada.</p></div></section>';
+  h+='<section><h2>Control antes de radicar</h2>'+
+    qcRow(r.sinFoto===0,r.sinFoto,"fichas sin registro fotográfico")+
+    qcRow(r.sinSustento===0,r.sinSustento,"fichas sin sustento de causalidad")+
+    qcRow(r.sinPin===0,r.sinPin,"fichas sin localizar en el plano")+
+    qcRow(r.dupes===0,r.dupes,"consecutivos repetidos entre inspectores")+
+    qcRow(!!(s.estructura&&s.estructura.sistema),1,"ficha de estructura sin diligenciar")+
+    qcRow(!!(s.estructura&&s.estructura.sectores),1,"sectores no inspeccionados sin declarar")+
+    '<div class="body" style="border-top:1px solid var(--rule2)"><p class="hint" style="margin:0">'+
+    'Mientras haya marcas rojas, el Entregable 1 tiene vacíos que el Supervisor va a devolver.</p></div></section>';
+  return h;
+}
+
+function tabEstructura(p,s){
+  var e=s.estructura||{};
+  return '<section><h2>Identificación de la sede</h2><div class="body">'+
+    '<p class="hint" style="margin-top:0">Esta ficha se llena una sola vez. Todas las fichas de elemento heredan estos datos.</p>'+
+    '<div class="field"><label for="eNombre">Nombre</label><input type="text" id="eNombre" value="'+esc(s.nombre)+'"></div>'+
+    '<div class="field"><label for="eDir">Dirección</label><input type="text" id="eDir" value="'+esc(s.direccion||"")+'"></div>'+
+    '<div class="field" style="margin-bottom:0"><label for="eEval">Tipo de evaluación</label>'+sel("eEval",C.tipoEval,s.tipoEval)+'</div>'+
+    '</div></section>'+
+    '<section><h2>Sistema estructural</h2><div class="body">'+
+    '<div class="field"><label for="eSis">Sistema</label>'+sel("eSis",C.sistema,e.sistema)+'</div>'+
+    '<div class="field"><label for="eMat">Material predominante</label>'+sel("eMat",C.material,e.material)+'</div>'+
+    '<div class="row field"><div><label for="ePisos">Pisos</label><input type="number" id="ePisos" value="'+esc(e.pisos||"")+'"></div>'+
+    '<div><label for="eSot">Sótanos</label><input type="number" id="eSot" value="'+esc(e.sotanos||"")+'"></div></div>'+
+    '<div class="row field"><div><label for="eArea">Área aproximada (m²)</label><input type="text" id="eArea" value="'+esc(e.area||"")+'"></div>'+
+    '<div><label for="eAno">Año de construcción</label><input type="text" id="eAno" value="'+esc(e.ano||"")+'"></div></div>'+
+    '<div class="field"><label for="eNorma">Norma de diseño</label>'+sel("eNorma",C.norma,e.norma)+'</div>'+
+    '<div class="field"><label for="eCim">Cimentación</label>'+sel("eCim",C.cimentacion,e.cimentacion)+'</div>'+
+    '<div class="field"><label for="eEnt">Entrepiso</label>'+sel("eEnt",C.entrepiso,e.entrepiso)+'</div>'+
+    '<div class="field" style="margin-bottom:0"><label for="eCub">Cubierta</label>'+sel("eCub",C.cubierta,e.cubierta)+'</div>'+
+    '</div></section>'+
+    '<section><h2>Irregularidades y antecedentes</h2><div class="body">'+
+    '<div class="field"><label>Irregularidades identificadas</label>'+checks("eIrr",C.irregular,e.irregularidades)+'</div>'+
+    '<div class="field"><label for="eUso">Uso actual</label><input type="text" id="eUso" value="'+esc(e.uso||"")+'" placeholder="Hospitalario, administrativo, docente"></div>'+
+    '<div class="field"><label for="eInt">Intervenciones o reforzamientos previos</label><textarea id="eInt">'+esc(e.intervenciones||"")+'</textarea></div>'+
+    '<div class="field"><label for="eSect">Sectores no inspeccionados</label>'+
+    '<p class="hint">Qué no se pudo revisar, por qué se impidió el acceso y qué riesgo quedó evidenciado. El numeral 4.1 lo exige en el Entregable 1.</p>'+
+    '<textarea id="eSect">'+esc(e.sectores||"")+'</textarea></div>'+
+    '<div class="field" style="margin-bottom:0"><label for="eNotas">Notas de la estructura</label><textarea id="eNotas">'+esc(e.notas||"")+'</textarea></div>'+
+    '<button class="btn primary block" id="bSaveE" style="margin-top:14px">Guardar ficha de estructura</button>'+
+    '</div></section>';
+}
+function saveEstructura(s){
+  s.nombre=gv("eNombre")||s.nombre; s.direccion=gv("eDir"); s.tipoEval=gv("eEval");
+  s.estructura={sistema:gv("eSis"),material:gv("eMat"),pisos:gv("ePisos"),sotanos:gv("eSot"),
+    area:gv("eArea"),ano:gv("eAno"),norma:gv("eNorma"),cimentacion:gv("eCim"),entrepiso:gv("eEnt"),
+    cubierta:gv("eCub"),irregularidades:gchk("eIrr"),uso:gv("eUso"),intervenciones:gv("eInt"),
+    sectores:gv("eSect"),notas:gv("eNotas")};
+  s.ts=new Date().toISOString(); s._d=true; put("sedes",s);
+  flash("Ficha de estructura guardada. Ya puedes levantar elementos."); S.tab="fichas"; render();
+}
+function tabPlano(p,s){
+  var f=fichasDe(s.id).filter(function(x){return x.pin});
+  var h='<section><h2>Plano de localización</h2><div class="body">';
+  if(!s.plano){
+    h+='<button class="addshot" id="bPlano" type="button">Cargar plano estructural o arquitectónico</button>'+
+      '<p class="hint" style="margin:10px 0 0">Sube una imagen del plano por nivel o por bloque. Sobre ella se ubican los pines de cada ficha.</p>';
+  }else{
+    h+='<div class="planowrap" id="pw"><div class="planoinner" id="pi"><img src="'+s.plano.src+'" alt="Plano de '+esc(s.nombre)+'">'+
+      f.map(function(x){
+        return '<button class="pin" data-s="'+esc(x.severidad)+'" data-fid="'+x.id+'" style="left:'+(x.pin.x*100)+'%;top:'+(x.pin.y*100)+'%" '+
+          'title="'+esc(x.codigo)+'"><i></i><b>'+x.consec+'</b></button>'}).join("")+
+      '</div></div>'+
+      '<p class="hint" style="margin:11px 0 0">'+f.length+' de '+fichasDe(s.id).length+' fichas localizadas. Para ubicar una ficha, ábrela y usa "Ubicar en el plano".</p>'+
+      '<button class="btn small ghost" id="bPlano" style="margin-top:10px">Reemplazar plano</button>';
+  }
+  h+='</div></section>';
+  return h;
+}
+function bindPlano(p,s){
+  var pi=$("pi"); if(!pi)return;
+  Array.prototype.forEach.call(pi.querySelectorAll(".pin"),function(b){
+    b.onclick=function(ev){ev.stopPropagation();go({v:"ficha",pid:p.id,sid:s.id,fid:b.dataset.fid})}});
+}
+$("fPlano").addEventListener("change",function(e){
+  var f=e.target.files[0]; if(!f)return;
+  var s=sede(S.route.sid); if(!s)return;
+  shrink(f,2200,0.78).then(function(img){
+    s.plano=img; s.ts=new Date().toISOString(); s._d=true; put("sedes",s);
+    flash("Plano cargado."); render();
+  }).catch(function(){flash("No se pudo procesar la imagen del plano.")});
+  e.target.value="";
+});
+
+/* --- ficha --- */
+/* --- captura rápida: chips y herencia --- */
+var Q={
+ tipoEl:[["Columna","Columna"],["Viga","Viga"],["Nudo viga-columna","Nudo"],["Muro estructural","Muro estr."],
+   ["Losa o entrepiso","Losa"],["Muro divisorio en mampostería","Mampostería"],["Cielo raso","Cielo raso"],["Fachada o antepecho","Fachada"]],
+ tipoDano:[["Fisura","Fisura"],["Grieta pasante","Grieta"],["Desprendimiento de recubrimiento","Desprend."],
+   ["Aplastamiento del concreto","Aplastam."],["Refuerzo expuesto","Refuerzo"],["Desplome o inclinación","Desplome"],["Sin daño aparente","Sin daño"]],
+ patron:[["Diagonal — cortante","Diagonal"],["En X — cortante cíclico","En X"],["Horizontal — flexión o deslizamiento","Horizontal"],
+   ["Vertical — compresión","Vertical"],["Concentrado en el nudo","Nudo"],["Mapeo o retracción","Retracción"],["No aplica","No aplica"]],
+ ancho:[["Menor a 0,2 mm","< 0,2"],["0,2 a 1,0 mm","0,2 – 1,0"],["1,0 a 2,0 mm","1,0 – 2,0"],
+   ["2,0 a 5,0 mm","2,0 – 5,0"],["Mayor a 5,0 mm","> 5,0"]]
+};
+function chipsF(id,quick,full,v){
+  var known=quick.some(function(q){return q[0]===v});
+  return '<div class="chips" id="'+id+'">'+
+    quick.map(function(q){return '<button type="button" data-v="'+esc(q[0])+'" aria-pressed="'+(q[0]===v?"true":"false")+'">'+esc(q[1])+'</button>'}).join("")+
+    '<button type="button" class="more" data-more="1" aria-pressed="'+((v&&!known)?"true":"false")+'">'+esc((v&&!known)?v:"Otro…")+'</button></div>'+
+    '<select id="'+id+'_s" class="hide" style="margin-top:8px">'+full.map(function(o){
+      return '<option value="'+esc(o)+'"'+(o===v?" selected":"")+'>'+esc(o||"Selecciona")+'</option>'}).join("")+'</select>';
+}
+document.addEventListener("click",function(e){
+  var b=e.target.closest(".chips button"); if(!b)return;
+  var c=b.parentNode, s=$(c.id+"_s"); if(!s)return;
+  if(b.dataset.more!==undefined){ s.classList.remove("hide"); s.focus(); try{s.showPicker&&s.showPicker()}catch(err){} return }
+  var on=b.getAttribute("aria-pressed")==="true";
+  Array.prototype.forEach.call(c.querySelectorAll("button"),function(x){x.setAttribute("aria-pressed","false")});
+  s.value = on ? "" : b.dataset.v;
+  if(!on) b.setAttribute("aria-pressed","true");
+  var mb=c.querySelector(".more"); if(mb)mb.textContent="Otro…";
+  s.classList.add("hide");
+});
+document.addEventListener("change",function(e){
+  var id=e.target.id||""; if(!/_s$/.test(id))return;
+  var c=$(id.slice(0,-2)); if(!c||!c.classList.contains("chips"))return;
+  var v=e.target.value, known=false;
+  Array.prototype.forEach.call(c.querySelectorAll("button[data-v]"),function(x){
+    var hit=x.dataset.v===v; if(hit)known=true; x.setAttribute("aria-pressed",hit?"true":"false")});
+  var mb=c.querySelector(".more");
+  if(mb){ mb.textContent=(v&&!known)?v:"Otro…"; mb.setAttribute("aria-pressed",(v&&!known)?"true":"false") }
+  e.target.classList.add("hide");
+});
+function nextRotulo(r){
+  if(!r)return "";
+  var m=String(r).match(/^(.*?)(\d+)(\D*)$/); if(!m)return r;
+  var n=String(parseInt(m[2],10)+1);
+  while(n.length<m[2].length)n="0"+n;
+  return m[1]+n+m[3];
+}
+
+function viewFicha(a,ab){
+  var p=proj(S.route.pid), s=sede(S.route.sid);
+  var f=S.route.fid?ficha(S.route.fid):null;
+  if(!p||!s)return go({v:"proyectos"});
+  var nuevo=!f, prev=null;
+  if(nuevo){
+    var propias=fichasDe(s.id).filter(function(x){return x.insp===S.insp.codigo});
+    prev=(propias.length?propias:fichasDe(s.id)).slice(-1)[0]||{};
+    var n=S.seqs[s.id]||S.insp.serie||1;
+    f={id:null,proyectoId:p.id,sedeId:s.id,consec:n,insp:S.insp.codigo,
+      codigo:p.codigo+"-"+s.codigo+(S.insp.codigo?"-"+S.insp.codigo:"")+"-"+("000"+n).slice(-4),
+      nivel:prev.nivel||"",zona:prev.zona||"",eje:prev.eje||"",rotulo:nextRotulo(prev.rotulo||""),
+      tipoEl:prev.tipoEl||"",material:prev.material||"",dim:prev.dim||"",
+      tipoDano:prev.tipoDano||"",patron:prev.patron||"",ancho:prev.ancho||"",
+      inspector:S.usuario||prev.inspector||"",fecha:stamp(),fotos:[],pin:null};
+  }
+  S.shots=(f.fotos||[]).slice();
+  head(nuevo?("Ficha "+f.consec):f.codigo,s.nombre,
+    "<b>"+esc(s.nombre)+"</b> &nbsp;·&nbsp; <span class='mono'>"+esc(f.codigo)+"</span>");
+
+  var heredado=nuevo&&prev&&prev.tipoEl?' <span class="inh">heredado de la anterior</span>':'';
+  var h='<div class="wrap"><section><div class="qf">';
+  h+='<div class="grp"><button class="bigshot'+(S.shots.length?' has':'')+'" id="bShot" type="button">'+
+     (S.shots.length?'Agregar otra fotografía':'Tomar fotografía')+'</button><div class="shots" id="shots"></div></div>';
+  h+='<div class="grp"><div class="lbl">Elemento'+heredado+'</div>'+chipsF("qEl",Q.tipoEl,C.tipoEl,f.tipoEl)+'</div>';
+  h+='<div class="grp"><div class="row">'+
+     '<div><label for="fRot">Rótulo</label><input type="text" id="fRot" class="mono" value="'+esc(f.rotulo)+'" placeholder="COL-13"></div>'+
+     '<div><label for="fNivel">Nivel</label><input type="text" id="fNivel" value="'+esc(f.nivel)+'" placeholder="Piso 2"></div>'+
+     '</div></div>';
+  h+='<div class="grp"><div class="lbl">Severidad <em>·</em></div>'+seg("fSev",C.severidad,f.severidad,"c4")+'</div>';
+  h+='<div class="grp"><div class="lbl">Origen atribuido <em>·</em></div>'+seg("fOrig",C.origen,f.origen,"c3")+'</div>';
+  h+='<div class="grp"><div class="lbl">Tipo de daño'+heredado+'</div>'+chipsF("qDano",Q.tipoDano,C.tipoDano,f.tipoDano)+'</div>';
+  h+='<div class="grp"><div class="lbl">Patrón'+heredado+'</div>'+chipsF("qPat",Q.patron,C.patron,f.patron)+'</div>';
+  h+='<div class="grp"><div class="lbl">Ancho máximo</div>'+chipsF("qAncho",Q.ancho,C.ancho,f.ancho)+'</div>';
+  h+='</div>';
+  h+='<button class="exp" id="bExp" type="button" aria-expanded="false"><span class="ar">›</span> Ampliar detalle</button>';
+
+  /* ---- detalle plegado ---- */
+  h+='<div id="detalle" class="hide">';
+  h+='<div class="body" style="border-top:1px solid var(--rule2)">'+
+    '<div class="row field"><div><label for="fEje">Eje o coordenada</label><input type="text" id="fEje" value="'+esc(f.eje||"")+'" placeholder="C-4"></div>'+
+    '<div><label for="fZona">Zona o servicio</label><input type="text" id="fZona" value="'+esc(f.zona||"")+'" placeholder="UCI"></div></div>'+
+    '<div class="row field"><div><label for="fMat">Material</label>'+sel("fMat",C.material,f.material)+'</div>'+
+    '<div><label for="fExt">Extensión</label><input type="text" id="fExt" value="'+esc(f.extension||"")+'" placeholder="1,20 m"></div></div>'+
+    '<div class="field" style="margin-bottom:0"><label for="fDim">Dimensiones</label><input type="text" id="fDim" value="'+esc(f.dim||"")+'" placeholder="0,40 × 0,40 m · h 3,20 m"></div>'+
+    '</div>';
+  h+='<div class="body" style="border-top:1px solid var(--rule2)">'+
+    '<div class="lbl" style="font-size:12.5px;font-weight:650;color:var(--ink3);margin-bottom:9px">Indicios observados</div>'+
+    '<div class="split" style="margin-bottom:14px">'+
+    '<div class="sis"><h3>Daño sísmico</h3>'+checks("fSis",C.indSis,f.indSis)+'</div>'+
+    '<div class="pre"><h3>Condición preexistente</h3>'+checks("fPre",C.indPre,f.indPre)+'</div></div>'+
+    '<div class="field"><label for="fSus">Sustento de la atribución</label>'+
+    '<textarea id="fSus" placeholder="Qué observaste y por qué lleva a esa conclusión.">'+esc(f.sustento||"")+'</textarea></div>'+
+    '<div class="field" style="margin-bottom:0"><label>Patología preexistente</label>'+checks("fPatol",C.patologia,f.patologia)+'</div>'+
+    '</div>';
+  h+='<div class="body" style="border-top:1px solid var(--rule2)">'+
+    '<div class="field"><label>Concepto de habilitación</label>'+seg("fHab",C.habil,f.habilitacion,"c3")+'</div>'+
+    '<div class="field"><label>Apuntalamiento inmediato</label>'+seg("fApun",C.apun,f.apuntalamiento,"c2")+'</div>'+
+    '<div class="field"><label>Ensayos requeridos</label>'+checks("fEns",C.ensayos,f.ensayos)+'</div>'+
+    '<div class="field"><label for="fMuestra">Identificación de la muestra</label>'+
+    '<input type="text" id="fMuestra" class="mono" value="'+esc(f.muestra||"")+'" placeholder="M-'+esc(s.codigo)+'-014"></div>'+
+    '<div class="field"><label for="fObs">Observaciones</label>'+
+    '<textarea id="fObs" placeholder="Restricciones de acceso, sectores no inspeccionados, riesgos.">'+esc(f.obs||"")+'</textarea></div>'+
+    '<div class="row field" style="margin-bottom:0"><div><label for="fInsp">Inspector</label><input type="text" id="fInsp" value="'+esc(f.inspector||"")+'"></div>'+
+    '<div><label for="fFecha">Fecha</label><input type="date" id="fFecha" value="'+esc(f.fecha||"")+'"></div></div>'+
+    '</div>';
+  h+='<div class="body" style="border-top:1px solid var(--rule2)"><div class="lbl" style="font-size:12.5px;font-weight:650;color:var(--ink3);margin-bottom:7px">Localización en el plano</div>';
+  if(!s.plano) h+='<p class="hint" style="margin:0">Carga primero el plano de la sede en su pestaña.</p>';
+  else h+='<p class="hint" style="margin:0 0 8px">'+(f.pin?"Ubicada. Toca otro punto para corregirla.":"Toca el punto del plano donde está el elemento.")+'</p>'+
+    '<div class="planowrap" id="pwF"><div class="planoinner" id="piF"><img src="'+s.plano.src+'" alt="Plano">'+
+    (f.pin?'<button class="pin" data-s="'+esc(f.severidad||"")+'" style="left:'+(f.pin.x*100)+'%;top:'+(f.pin.y*100)+'%"><i></i><b>'+f.consec+'</b></button>':"")+
+    '</div></div>';
+  h+='</div>';
+  if(!nuevo) h+='<div class="body" style="border-top:1px solid var(--rule2)"><button class="btn danger block small" id="bDelF">Eliminar esta ficha</button></div>';
+  h+='</div></section></div>';
+  a.innerHTML=h;
+  renderShots();
+
+  $("bShot").onclick=function(){$("fPhoto").click()};
+  $("bExp").onclick=function(){
+    var d=$("detalle"), open=d.classList.contains("hide");
+    d.classList.toggle("hide");
+    this.setAttribute("aria-expanded",open?"true":"false");
+    this.lastChild.textContent=open?" Ocultar detalle":" Ampliar detalle";
+  };
+  if($("piF")){
+    $("piF").addEventListener("click",function(ev){
+      if(ev.target.closest(".pin"))return;
+      var r=this.getBoundingClientRect();
+      var pin={x:(ev.clientX-r.left)/r.width,y:(ev.clientY-r.top)/r.height};
+      f.pin=pin; S.route._pin=pin; flash("Punto marcado. Se guarda con la ficha.");
+      var old=this.querySelector(".pin"); if(old)old.remove();
+      var b=document.createElement("button"); b.className="pin";
+      b.setAttribute("data-s",gseg("fSev")||""); b.style.left=(pin.x*100)+"%"; b.style.top=(pin.y*100)+"%";
+      b.innerHTML='<i></i><b>'+f.consec+'</b>'; this.appendChild(b);
+    });
+  }
+  if($("bDelF")) $("bDelF").onclick=function(){
+    if(!confirm("Eliminar "+f.codigo+"? No se puede deshacer.")) return;
+    S.fichas=S.fichas.filter(function(x){return x.id!==f.id}); del("fichas",f.id);
+    flash("Ficha eliminada."); go({v:"sede",pid:p.id,sid:s.id,tab:"fichas"});
+  };
+  $("abar").classList.remove("hide");
+  ab.innerHTML= nuevo
+    ? '<button class="btn ghost" id="bOut">Guardar y salir</button><button class="btn primary" id="bSaveF">Guardar y siguiente</button>'
+    : '<button class="btn ghost" id="bOut">Cancelar</button><button class="btn primary" id="bSaveF">Actualizar ficha</button>';
+  $("bSaveF").onclick=function(){saveFicha(p,s,f,nuevo,false)};
+  $("bOut").onclick=function(){
+    if(nuevo) saveFicha(p,s,f,nuevo,true);
+    else go({v:"sede",pid:p.id,sid:s.id,tab:"fichas"});
+  };
+}
+function renderShots(){
+  var c=$("shots"); if(!c)return;
+  c.innerHTML=S.shots.map(function(s,i){
+    return '<div class="shot"><img src="'+s.src+'" alt="Fotografía '+(i+1)+'">'+
+      '<button class="del" data-i="'+i+'" type="button" aria-label="Quitar">×</button>'+
+      '<input type="text" data-n="'+i+'" value="'+esc(s.nota||"")+'" placeholder="Descripción"></div>'}).join("");
+  c.onclick=function(e){var b=e.target.closest(".del"); if(!b)return; S.shots.splice(+b.dataset.i,1); renderShots()};
+  c.oninput=function(e){ if(e.target.dataset.n!==undefined) S.shots[+e.target.dataset.n].nota=e.target.value };
+}
+$("fPhoto").addEventListener("change",function(e){
+  var fs=Array.prototype.slice.call(e.target.files||[]);
+  if(S.shots.length+fs.length>8){flash("Máximo 8 fotografías por ficha. Crea otra ficha si necesitas más.");e.target.value="";return}
+  Promise.all(fs.map(function(f){return shrink(f,1400,0.7)})).then(function(imgs){
+    imgs.forEach(function(o){S.shots.push({src:o.src,nota:""})}); renderShots(); e.target.value="";
+  }).catch(function(){flash("No se pudo procesar una de las imágenes.")});
+});
+function saveFicha(p,s,f,nuevo,salir){
+  if(!gv("qEl_s")){flash("Falta el tipo de elemento.");return}
+  if(!gseg("fSev")){flash("Falta la severidad.");return}
+  if(!gseg("fOrig")){flash("Falta el origen atribuido. Es el campo que sostiene el dictamen.");return}
+  var o={id:f.id||uid("f"),proyectoId:p.id,sedeId:s.id,consec:f.consec,codigo:f.codigo,insp:f.insp||S.insp.codigo,
+    nivel:gv("fNivel"),eje:gv("fEje"),rotulo:gv("fRot"),zona:gv("fZona"),
+    inspector:gv("fInsp"),fecha:gv("fFecha"),
+    tipoEl:gv("qEl_s"),material:gv("fMat"),dim:gv("fDim"),
+    tipoDano:gv("qDano_s"),patron:gv("qPat_s"),ancho:gv("qAncho_s"),extension:gv("fExt"),
+    severidad:gseg("fSev"),origen:gseg("fOrig"),indSis:gchk("fSis"),indPre:gchk("fPre"),sustento:gv("fSus"),
+    patologia:gchk("fPatol"),habilitacion:gseg("fHab"),apuntalamiento:gseg("fApun"),
+    ensayos:gchk("fEns"),muestra:gv("fMuestra"),obs:gv("fObs"),
+    fotos:S.shots.slice(),pin:S.route._pin||f.pin||null,
+    ts:new Date().toISOString(),_d:true};
+  var i=S.fichas.map(function(x){return x.id}).indexOf(o.id);
+  if(i>=0)S.fichas[i]=o; else S.fichas.push(o);
+  put("fichas",o);
+  if(nuevo){ S.seqs[s.id]=(f.consec||1)+1; mset("seqs",S.seqs) }
+  S.route._pin=null;
+  if(!S.usuario&&o.inspector){S.usuario=o.inspector;mset("usuario",o.inspector)}
+  flash("Ficha "+o.codigo+" guardada.");
+  if(nuevo&&!salir) go({v:"ficha",pid:p.id,sid:s.id,fid:null});
+  else go({v:"sede",pid:p.id,sid:s.id,tab:"fichas"});
+}
+
+/* --- ajustes --- */
+function viewAjustes(a){a.innerHTML=""}
+
+/* ========== impresión de cédulas ========== */
+var SEVC={Leve:"#2F7A52",Moderado:"#A8821A",Severo:"#B85A25",Grave:"#96211F"};
+function kv(k,v){ if(!v||(Array.isArray(v)&&!v.length))return "";
+  return '<div class="kv"><span class="k">'+esc(k)+'</span><span class="v">'+esc(Array.isArray(v)?v.join(", "):v)+'</span></div>'}
+function pieDe(p,s){
+  return '<div class="cf"><b>Confidencialidad.</b> Documento de circulación restringida elaborado en ejecución de '+esc(p.nombre)+
+    '. Contiene información técnica reservada de '+esc(p.cliente||"el Contratante")+' y de los Contratistas. '+
+    'Su divulgación, reproducción o uso por fuera del objeto contractual requiere autorización escrita previa. '+
+    'Quien lo reciba responde por su custodia.<br><b>Derechos de autor.</b> © '+(new Date().getFullYear())+' '+esc(p.contratistas)+
+    '. Obra protegida por la Ley 23 de 1982 y la Decisión Andina 351 de 1993. Se prohíbe su reproducción total o parcial, '+
+    'su modificación y su uso como base de obras derivadas sin autorización expresa de los titulares.'+
+    (S.usuario?'<br>Ejemplar asignado a '+esc(S.usuario)+' · generado el '+new Date().toLocaleString("es-CO"):"")+'</div>'}
+function bloqueResumen(p,s){
+  var r=resumen(s); if(!r.total) return "";
+  function tb(t,obj){
+    var ks=Object.keys(obj).filter(function(k){return obj[k]>0});
+    if(!ks.length)return "";
+    ks.sort(function(a,b){return obj[b]-obj[a]});
+    return '<div class="blk"><h4>'+esc(t)+'</h4>'+ks.map(function(k){
+      return '<div class="kv"><span class="k">'+esc(k)+'</span><span class="v">'+obj[k]+
+        ' &nbsp;(<span style="color:#55635F">'+Math.round(obj[k]*100/r.total)+' %</span>)</span></div>'}).join("")+'</div>';
+  }
+  function lista(t,arr){
+    if(!arr.length)return "";
+    return '<div class="blk"><h4>'+esc(t)+'</h4><p>'+arr.map(function(x){
+      return '<b>'+esc(x.codigo)+'</b> — '+esc([x.tipoEl,x.rotulo,x.nivel,x.zona,x.tipoDano].filter(Boolean).join(", "))}).join("<br>")+'</p></div>';
+  }
+  var e=s.estructura||{};
+  return '<div class="cedula">'+(S.usuario?'<div class="wm">'+esc(S.usuario)+'</div>':'')+
+    '<div class="ch"><div class="l"><b>Resumen del levantamiento</b>'+esc(p.nombre)+'<br>'+esc(s.nombre)+'</div>'+
+    '<div class="r"><span class="code">'+esc(p.codigo)+'-'+esc(s.codigo)+'</span>'+
+    '<div style="font-size:9pt">'+r.total+' fichas</div></div></div>'+
+    '<div class="grid2">'+kv("Fichas levantadas",String(r.total))+kv("Elementos estructurales",String(r.estruct))+
+    kv("Elementos no estructurales",String(r.noEstruct))+kv("Muestras identificadas",String(r.muestras.length))+
+    kv("Daño atribuido al sismo",Math.round((r.orig["Sísmico"]||0)*100/r.total)+" %")+
+    kv("Fichas localizadas en plano",String(r.total-r.sinPin)+" de "+r.total)+'</div>'+
+    tb("Distribución por severidad",r.sev)+
+    tb("Origen atribuido del daño",r.orig)+
+    tb("Concepto de habilitación",r.hab)+
+    tb("Elementos afectados por tipo",r.tipo)+
+    tb("Distribución por zona o servicio",r.zona)+
+    tb("Patología preexistente recurrente",r.patol)+
+    tb("Programa de ensayos consolidado",r.ens)+
+    lista("Elementos que requieren apuntalamiento inmediato",r.apuntala)+
+    lista("Sectores que deben permanecer restringidos",r.restringido)+
+    (e.sectores?'<div class="blk"><h4>Sectores no inspeccionados</h4><p>'+esc(e.sectores)+'</p></div>':"")+
+    pieDe(p,s)+'</div>';
+}
+function htmlCedulas(p,s){
+  var f=fichasDe(s.id), h="";
+  f.forEach(function(x,i){
+    h+='<div class="cedula">'+(S.usuario?'<div class="wm">'+esc(S.usuario)+'</div>':'')+
+      '<div class="ch"><div class="l"><b>Cédula del elemento</b>'+esc(p.nombre)+'<br>'+esc(s.nombre)+'</div>'+
+      '<div class="r"><span class="code">'+esc(x.codigo)+'</span>'+
+      (x.severidad?'<span class="sev" style="background:'+SEVC[x.severidad]+'">'+esc(x.severidad)+'</span>':"")+'</div></div>'+
+      '<div class="grid2">'+
+      kv("Elemento",[x.tipoEl,x.rotulo].filter(Boolean).join(" "))+kv("Material",x.material)+
+      kv("Nivel",x.nivel)+kv("Eje o coordenada",x.eje)+kv("Zona o servicio",x.zona)+kv("Dimensiones",x.dim)+
+      kv("Tipo de daño",x.tipoDano)+kv("Patrón",x.patron)+kv("Ancho máximo",x.ancho)+kv("Extensión",x.extension)+
+      kv("Origen atribuido",x.origen)+kv("Habilitación",x.habilitacion)+
+      kv("Apuntalamiento",x.apuntalamiento)+kv("Muestra",x.muestra)+
+      kv("Inspector",x.inspector)+kv("Fecha",x.fecha)+'</div>'+
+      (x.indSis&&x.indSis.length?'<div class="blk"><h4>Indicios de daño sísmico</h4><p>'+esc(x.indSis.join(" · "))+'</p></div>':"")+
+      (x.indPre&&x.indPre.length?'<div class="blk"><h4>Indicios de condición preexistente</h4><p>'+esc(x.indPre.join(" · "))+'</p></div>':"")+
+      (x.sustento?'<div class="blk"><h4>Sustento de la atribución</h4><p>'+esc(x.sustento)+'</p></div>':"")+
+      (x.patologia&&x.patologia.length?'<div class="blk"><h4>Patología preexistente</h4><p>'+esc(x.patologia.join(" · "))+'</p></div>':"")+
+      (x.ensayos&&x.ensayos.length?'<div class="blk"><h4>Ensayos requeridos</h4><p>'+esc(x.ensayos.join(" · "))+'</p></div>':"")+
+      (x.obs?'<div class="blk"><h4>Observaciones</h4><p>'+esc(x.obs)+'</p></div>':"")+
+      ((x.fotos||[]).length?'<div class="blk"><h4>Registro fotográfico</h4><div class="pgrid">'+
+        x.fotos.map(function(ph,j){return '<figure><img src="'+ph.src+'"><figcaption>Foto '+(j+1)+'. '+
+          esc(ph.nota||"Sin descripción")+'</figcaption></figure>'}).join("")+'</div></div>':"")+
+      '<div style="font-size:8pt;color:#55635F;margin-top:9px">Ficha '+(i+1)+' de '+f.length+
+      (x.pin?' · localizada en el plano con el número '+x.consec:' · sin localización en plano')+'</div>'+
+      pieDe(p,s)+'</div>';
+  });
+  return h;
+}
+
+function resumenProyecto(p){
+  var sd=sedesDe(p.id);
+  var t={total:0,estruct:0,noEstruct:0,muestras:0,apuntala:0,restringido:0,sinPin:0,sinFoto:0,sinSustento:0,
+    sev:{},orig:{},ens:{},porSede:[]};
+  C.severidad.forEach(function(k){t.sev[k]=0});
+  C.origen.forEach(function(k){t.orig[k]=0});
+  sd.forEach(function(s){
+    var r=resumen(s);
+    t.total+=r.total; t.estruct+=r.estruct; t.noEstruct+=r.noEstruct;
+    t.muestras+=r.muestras.length; t.apuntala+=r.apuntala.length; t.restringido+=r.restringido.length;
+    t.sinPin+=r.sinPin; t.sinFoto+=r.sinFoto; t.sinSustento+=r.sinSustento;
+    C.severidad.forEach(function(k){t.sev[k]+=r.sev[k]||0});
+    C.origen.forEach(function(k){t.orig[k]+=r.orig[k]||0});
+    Object.keys(r.ens).forEach(function(k){t.ens[k]=(t.ens[k]||0)+r.ens[k]});
+    t.porSede.push({s:s,r:r});
+  });
+  return t;
+}
+function imprimirProyecto(p,conCedulas){
+  var t=resumenProyecto(p);
+  if(!t.total){flash("Todavía no hay fichas en este proyecto.");return}
+  function tb(tit,obj,tot){
+    var ks=Object.keys(obj).filter(function(k){return obj[k]>0});
+    if(!ks.length)return "";
+    ks.sort(function(a,b){return obj[b]-obj[a]});
+    return '<div class="blk"><h4>'+esc(tit)+'</h4>'+ks.map(function(k){
+      return '<div class="kv"><span class="k">'+esc(k)+'</span><span class="v">'+obj[k]+
+        ' &nbsp;('+Math.round(obj[k]*100/tot)+' %)</span></div>'}).join("")+'</div>';
+  }
+  var h='<div class="cedula">'+(S.usuario?'<div class="wm">'+esc(S.usuario)+'</div>':'')+
+    '<div class="ch"><div class="l"><b>'+esc(p.nombre)+'</b>'+esc(p.contratistas)+'<br>'+esc(p.cliente||"")+'</div>'+
+    '<div class="r"><span class="code">'+esc(p.codigo)+'</span>'+
+    '<div style="font-size:9pt">Consolidado · '+t.porSede.length+' sedes</div></div></div>'+
+    '<h3 style="font-size:13pt;margin:0 0 9px">Consolidado del levantamiento de daños</h3>'+
+    '<div class="grid2">'+
+    kv("Sedes evaluadas",String(t.porSede.length))+kv("Fichas levantadas",String(t.total))+
+    kv("Elementos estructurales",String(t.estruct))+kv("Elementos no estructurales",String(t.noEstruct))+
+    kv("Daño atribuido al sismo",Math.round((t.orig["Sísmico"]||0)*100/t.total)+" %")+
+    kv("Muestras identificadas",String(t.muestras))+
+    kv("Requieren apuntalamiento",String(t.apuntala))+kv("Sectores restringidos",String(t.restringido))+
+    '</div>'+
+    '<div class="blk"><h4>Distribución por sede</h4>'+
+    '<div class="kv" style="border-bottom:1px solid #8A9794"><span class="k">Sede</span>'+
+    '<span class="v">Fichas · graves y severos · % sísmico · restringidos</span></div>'+
+    t.porSede.map(function(x){
+      var r=x.r, gs=(r.sev["Grave"]||0)+(r.sev["Severo"]||0);
+      return '<div class="kv"><span class="k">'+esc(x.s.nombre)+'</span><span class="v">'+
+        r.total+' · '+gs+' · '+(r.total?Math.round((r.orig["Sísmico"]||0)*100/r.total):0)+' % · '+
+        r.restringido.length+'</span></div>'}).join("")+'</div>'+
+    tb("Distribución por severidad",t.sev,t.total)+
+    tb("Origen atribuido del daño",t.orig,t.total)+
+    tb("Programa de ensayos consolidado",t.ens,t.total)+
+    '<div class="blk"><h4>Estado de la información</h4>'+
+    '<div class="kv"><span class="k">Fichas sin fotografía</span><span class="v">'+t.sinFoto+'</span></div>'+
+    '<div class="kv"><span class="k">Fichas sin sustento de causalidad</span><span class="v">'+t.sinSustento+'</span></div>'+
+    '<div class="kv"><span class="k">Fichas sin localizar en plano</span><span class="v">'+t.sinPin+'</span></div></div>'+
+    pieDe(p,t.porSede[0]?t.porSede[0].s:{})+'</div>';
+  t.porSede.forEach(function(x){
+    if(!x.r.total)return;
+    h+=bloqueResumen(p,x.s);
+    if(conCedulas) h+=htmlCedulas(p,x.s);
+  });
+  $("print").innerHTML=h;
+  setTimeout(function(){window.print()},400);
+}
+function imprimir(p,s){
+  var f=fichasDe(s.id);
+  if(!f.length){flash("No hay fichas para imprimir en esta sede.");return}
+  var e=s.estructura||{};
+  var h='';
+  /* portada + plano de localización */
+  h+='<div class="cedula">'+(S.usuario?'<div class="wm">'+esc(S.usuario)+'</div>':'')+
+    '<div class="ch"><div class="l"><b>'+esc(p.nombre)+'</b>'+esc(p.contratistas)+'<br>'+esc(p.cliente||"")+'</div>'+
+    '<div class="r"><span class="code">'+esc(p.codigo)+'-'+esc(s.codigo)+'</span>'+
+    '<div style="font-size:9pt">Mapeo estructural · '+f.length+' fichas</div></div></div>'+
+    '<h3 style="font-size:13pt;margin:0 0 9px">'+esc(s.nombre)+'</h3>'+
+    '<div class="grid2">'+kv("Dirección",s.direccion)+kv("Tipo de evaluación",s.tipoEval)+
+    kv("Sistema estructural",e.sistema)+kv("Material",e.material)+kv("Pisos",e.pisos)+kv("Sótanos",e.sotanos)+
+    kv("Área aproximada",e.area?e.area+" m²":"")+kv("Año de construcción",e.ano)+kv("Norma de diseño",e.norma)+
+    kv("Cimentación",e.cimentacion)+kv("Entrepiso",e.entrepiso)+kv("Cubierta",e.cubierta)+kv("Uso actual",e.uso)+'</div>'+
+    (e.irregularidades&&e.irregularidades.length?'<div class="blk"><h4>Irregularidades identificadas</h4><p>'+esc(e.irregularidades.join(" · "))+'</p></div>':"")+
+    (e.intervenciones?'<div class="blk"><h4>Intervenciones previas</h4><p>'+esc(e.intervenciones)+'</p></div>':"")+
+    (s.plano?'<div class="blk"><h4>Plano de localización de daños</h4><div style="position:relative;margin-top:6px">'+
+      '<img src="'+s.plano.src+'" style="width:100%;border:1px solid #B9C2BF">'+
+      f.filter(function(x){return x.pin}).map(function(x){
+        return '<span style="position:absolute;left:'+(x.pin.x*100)+'%;top:'+(x.pin.y*100)+'%;transform:translate(-50%,-50%);'+
+          'background:'+(SEVC[x.severidad]||"#14514D")+';color:#fff;font-size:7pt;font-weight:700;border:1.5px solid #fff;'+
+          'border-radius:50%;width:15px;height:15px;display:flex;align-items:center;justify-content:center;font-family:monospace">'+x.consec+'</span>'}).join("")+
+      '</div><p style="font-size:8pt;margin-top:5px">Cada número corresponde al consecutivo de la ficha respectiva.</p></div>':"")+
+    pieDe(p,s)+'</div>';
+  h+=bloqueResumen(p,s);
+  h+=htmlCedulas(p,s);
+  $("print").innerHTML=h;
+  setTimeout(function(){window.print()},350);
+}
+
+/* ========== exportación ========== */
+var COLS=[["codigo","Ficha"],["consec","Consecutivo"],["fecha","Fecha"],["inspector","Inspector"],
+  ["_proy","Proyecto"],["_sede","Sede"],["nivel","Nivel"],["zona","Zona"],["eje","Eje"],["rotulo","Rótulo"],
+  ["tipoEl","Elemento"],["material","Material"],["dim","Dimensiones"],["tipoDano","Tipo de daño"],
+  ["patron","Patrón"],["ancho","Ancho"],["extension","Extensión"],["severidad","Severidad"],["origen","Origen"],
+  ["indSis","Indicios sísmicos"],["indPre","Indicios preexistentes"],["sustento","Sustento"],["patologia","Patología"],
+  ["habilitacion","Habilitación"],["apuntalamiento","Apuntalamiento"],["ensayos","Ensayos"],["muestra","Muestra"],
+  ["obs","Observaciones"],["_pin","Localizado en plano"],["_nf","Fotos"]];
+function cc(v){ if(Array.isArray(v))v=v.join(" | "); v=String(v==null?"":v);
+  return /[";\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v }
+function expCsv(pid,sid){
+  var f=S.fichas.filter(function(x){return (!pid||x.proyectoId===pid)&&(!sid||x.sedeId===sid)});
+  if(!f.length){flash("No hay fichas para exportar.");return}
+  var rows=f.map(function(x){
+    var o=Object.assign({},x);
+    o._proy=(proj(x.proyectoId)||{}).nombre||""; o._sede=(sede(x.sedeId)||{}).nombre||"";
+    o._pin=x.pin?"Sí":"No"; o._nf=(x.fotos||[]).length;
+    return COLS.map(function(c){return cc(o[c[0]])}).join(";")});
+  dl("mapeo_"+stamp()+".csv",new Blob(["\uFEFF"+COLS.map(function(c){return c[1]}).join(";")+"\n"+rows.join("\n")],
+    {type:"text/csv;charset=utf-8"}));
+}
+function expJson(){
+  dl("respaldo_mapeo_"+stamp()+".json",new Blob([JSON.stringify({
+    app:"Mapeo estructural IACON-TERRAM",exportado:new Date().toISOString(),usuario:S.usuario,
+    proyectos:S.proyectos,sedes:S.sedes,fichas:S.fichas},null,1)],{type:"application/json"}));
+}
+$("fImport").addEventListener("change",function(e){
+  var f=e.target.files[0]; if(!f)return;
+  var fr=new FileReader();
+  fr.onload=function(){
+    try{
+      var d=JSON.parse(fr.result), n=0;
+      [["proyectos","proyectos"],["sedes","sedes"],["fichas","fichas"]].forEach(function(k){
+        (d[k[0]]||[]).forEach(function(o){
+          if(!o||!o.id)return;
+          var arr=S[k[1]], j=arr.map(function(x){return x.id}).indexOf(o.id);
+          var mine=j>=0?arr[j]:null;
+          if(!mine||(o.ts||"")>(mine.ts||"")){ if(j>=0)arr[j]=o; else arr.push(o); put(k[1],o); n++ }
+        })});
+      flash(n+" elementos incorporados. Los más recientes prevalecen.");
+      render();
+    }catch(err){flash("El archivo no tiene el formato esperado. Usa un respaldo exportado desde esta plataforma.")}
+    e.target.value="";
+  };
+  fr.readAsText(f);
+});
+
+/* ========== delegación de navegación ========== */
+document.addEventListener("click",function(e){
+  var d=e.target.closest("[data-go]"); if(!d)return;
+  try{go(JSON.parse(d.dataset.go))}catch(err){}
+});
+
+/* ========== semilla ========== */
+function semilla(){
+  var p={id:"p_c52",codigo:"C52",nombre:"Contrato 52 de 2026 — Evaluación post-sismo",
+    cliente:"Caja de Compensación Familiar de Risaralda — Comfamiliar Risaralda",
+    contratistas:"IACON S.A.S. — TERRAM Consultoría y Construcción S.A.S.",
+    notas:"Estudios, diagnósticos y dictámenes técnicos sobre la infraestructura afectada por el sismo del 10 de agosto de 2026. Plazo 120 días calendario.",
+    creado:new Date().toISOString(),ts:new Date().toISOString(),_d:true};
+  var ss=[
+    ["s_cli","Clínica Comfamiliar Pereira","CLI","Calle 1 #1-15 / Av. Circunvalar #3-01","Tipo 2 — Vulnerabilidad y patología estructural"],
+    ["s_csc","Complejo Sede Centro — Bloques 1 al 5","CSC","Calle 22 #4-40","Tipo 2 — Vulnerabilidad y patología estructural"],
+    ["s_adm","Sede Administrativa Circunvalar","ADM","Av. Circunvalar #3-01","Tipo 1 — Reconocimiento detallado"],
+    ["s_cap","Capilla — Sede Antiguo Colegio La Enseñanza","CAP","Av. Circunvalar #1-57","Tipo 1 — Reconocimiento detallado"]
+  ].map(function(r){return {id:r[0],proyectoId:p.id,nombre:r[1],codigo:r[2],direccion:r[3],tipoEval:r[4],
+    estructura:{},plano:null,next:1,ts:new Date().toISOString(),_d:true}});
+  S.proyectos.push(p); put("proyectos",p);
+  ss.forEach(function(s){S.sedes.push(s);put("sedes",s)});
+}
+
+/* ========== arranque ========== */
+openDB().then(function(db){
+  DB=db; S.syncMode=hasSync()?"compartido":"local";
+  return Promise.all([all("proyectos"),all("sedes"),all("fichas"),mget("usuario"),mget("gh"),mget("insp"),mget("seqs")]);
+}).then(function(r){
+  S.proyectos=r[0]||[]; S.sedes=r[1]||[]; S.fichas=r[2]||[]; S.usuario=r[3]||"";
+  if(r[4]) S.gh=Object.assign(S.gh,r[4]);
+  if(r[5]) S.insp=Object.assign(S.insp,r[5]);
+  S.seqs=r[6]||{};
+  if(!S.proyectos.length) semilla();
+  render();
+  if(!DB) flash("Este equipo no guarda respaldo automático. Exporta el respaldo antes de cerrar.",true);
+  else if(ghOn()) flash("Repositorio GitHub configurado. Toca el indicador de arriba para sincronizar.");
+  else if(!hasSync()) flash("Modo local: los datos quedan en este dispositivo. Configura el repositorio GitHub o usa exportar e importar respaldo.");
+});
+})();
+</script>
+<script>
+if("serviceWorker" in navigator){
+  window.addEventListener("load",function(){
+    navigator.serviceWorker.register("sw.js").catch(function(){});
+  });
+}
+</script>
+</body>
+</html>
