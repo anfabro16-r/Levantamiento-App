@@ -1,7 +1,7 @@
 /* Mapeo estructural IACON — TERRAM · service worker
    Cachea el armazón de la aplicación para que funcione sin señal.
    Los datos NO pasan por aquí: viven en IndexedDB del dispositivo. */
-var CACHE = "mapeo-v8";
+var CACHE = "mapeo-v9";
 var ASSETS = ["./", "./index.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png"];
 
 self.addEventListener("install", function (e) {

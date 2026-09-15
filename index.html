@@ -20,25 +20,33 @@ body{font-family:var(--sans);background:var(--paper);color:var(--ink);font-size:
 .app{padding-bottom:104px}
 
 /* shell */
-.topbar{position:sticky;top:0;z-index:60;background:var(--teal);color:#fff}
-.topbar .wrap{display:flex;align-items:center;gap:10px;padding:9px 14px}
-.back{background:rgba(255,255,255,.16);border:none;color:#fff;font:inherit;font-size:20px;line-height:1;
-  width:34px;height:34px;border-radius:8px;cursor:pointer;flex:none;padding:0}
+.topbar{position:sticky;top:0;z-index:60;background:var(--teal);color:#fff;
+  padding-top:calc(env(safe-area-inset-top,0px) + 6px)}
+.topbar .wrap{display:flex;align-items:center;gap:11px;
+  padding:10px calc(14px + env(safe-area-inset-right,0px)) 11px calc(14px + env(safe-area-inset-left,0px))}
+.back{background:rgba(255,255,255,.18);border:none;color:#fff;font:inherit;font-size:24px;line-height:1;
+  width:42px;height:42px;border-radius:11px;cursor:pointer;flex:none;padding:0 0 3px 0}
+.back:active{background:rgba(255,255,255,.3)}
 .tt{flex:1;min-width:0}
 .tt h1{font-size:15px;font-weight:650;margin:0;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tt p{font-size:12.5px;margin:0;opacity:.82;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.syncdot{font-size:11.5px;font-family:var(--mono);background:rgba(255,255,255,.16);padding:5px 8px;border-radius:6px;
-  cursor:pointer;border:none;color:#fff;flex:none}
-.crumb{background:var(--teal2);color:#CFE0DE;font-size:12.5px;padding:6px 0}
+.syncdot{font-size:12.5px;font-family:var(--mono);background:rgba(255,255,255,.18);
+  padding:0 13px;border-radius:9px;cursor:pointer;border:none;color:#fff;flex:none;
+  min-height:42px;min-width:58px;display:flex;align-items:center;justify-content:center}
+.syncdot:active{background:rgba(255,255,255,.3)}
+.crumb{background:var(--teal2);color:#CFE0DE;font-size:12.5px;padding:7px 0}
+.crumb .wrap,.notice .wrap{padding-left:calc(14px + env(safe-area-inset-left,0px));
+  padding-right:calc(14px + env(safe-area-inset-right,0px))}
 .crumb .wrap{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .crumb b{color:#fff;font-weight:600}
 .notice{background:var(--warn);color:var(--warnink);border-bottom:1px solid #E9D6AE;font-size:13.5px;padding:9px 0;display:none}
 .conf{background:#26302E;color:#B9C6C3;font-size:11.5px;padding:7px 0;text-align:center;letter-spacing:.01em}
 
 /* tabs */
-.tabs{display:flex;background:#fff;border-bottom:1px solid var(--rule2);position:sticky;top:52px;z-index:50}
-.tabs button{flex:1;font:inherit;font-size:13.5px;font-weight:600;padding:12px 4px;background:none;border:none;
-  color:var(--ink3);cursor:pointer;border-bottom:2.5px solid transparent}
+.tabs{display:flex;background:#fff;border-bottom:1px solid var(--rule2);position:sticky;
+  top:var(--hdr,70px);z-index:50}
+.tabs button{flex:1;font:inherit;font-size:13.5px;font-weight:600;padding:15px 4px;background:none;border:none;
+  color:var(--ink3);cursor:pointer;border-bottom:2.5px solid transparent;min-height:50px}
 .tabs button[aria-selected="true"]{color:var(--teal);border-bottom-color:var(--teal)}
 
 /* bloques */
@@ -88,7 +96,9 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:3px solid r
 .tools{display:flex;flex-wrap:wrap;gap:7px}
 .actionbar{position:fixed;left:0;right:0;bottom:0;z-index:70;background:rgba(244,246,245,.96);
   backdrop-filter:blur(8px);border-top:1px solid var(--rule);padding:10px 0 max(10px,env(safe-area-inset-bottom))}
-.actionbar .wrap{display:flex;gap:9px}
+.actionbar .wrap{display:flex;gap:9px;
+  padding-left:calc(14px + env(safe-area-inset-left,0px));
+  padding-right:calc(14px + env(safe-area-inset-right,0px))}
 .actionbar .btn{flex:1}
 
 /* listas */
@@ -569,11 +579,19 @@ $("back").addEventListener("click",function(){
 });
 
 /* ========== vistas ========== */
+function fitHeader(){
+  var t=document.querySelector(".topbar");
+  if(t) document.documentElement.style.setProperty("--hdr", t.offsetHeight+"px");
+}
+window.addEventListener("resize",fitHeader);
+window.addEventListener("orientationchange",function(){setTimeout(fitHeader,220)});
+
 function render(){
   var r=S.route, a=$("app"), ab=$("abarIn");
   $("back").classList.toggle("hide",r.v==="proyectos");
   $("abar").classList.add("hide"); ab.innerHTML="";
   paintSync();
+  setTimeout(fitHeader,0);
   if(r.v==="proyectos") viewProyectos(a,ab);
   else if(r.v==="proyecto") viewProyecto(a,ab);
   else if(r.v==="sede") viewSede(a,ab);
@@ -1573,7 +1591,7 @@ openDB().then(function(db){
   if(r[5]) S.insp=Object.assign(S.insp,r[5]);
   S.seqs=r[6]||{};
   if(!S.proyectos.length) semilla();
-  render();
+  render(); fitHeader(); setTimeout(fitHeader,300);
   if(!DB) flash("Este equipo no guarda respaldo automático. Exporta el respaldo antes de cerrar.",true);
   else if(ghOn()) flash("Repositorio GitHub configurado. Toca el indicador de arriba para sincronizar.");
   else if(!hasSync()) flash("Modo local: los datos quedan en este dispositivo. Configura el repositorio GitHub o usa exportar e importar respaldo.");
