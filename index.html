@@ -226,10 +226,20 @@ input:focus,select:focus,textarea:focus,button:focus-visible{outline:3px solid r
 .blk{margin-top:11px}
 .blk h4{font-size:9pt;font-weight:700;color:var(--teal);margin:0 0 5px;padding-bottom:3px;border-bottom:1px solid var(--rule)}
 .blk p{margin:0;font-size:9.5pt;line-height:1.42}
-.pgrid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:7px}
-.pgrid figure{margin:0}
-.pgrid img{width:100%;height:118px;object-fit:cover;border:1px solid #B9C2BF}
-.pgrid figcaption{font-size:8pt;color:#4A5956;padding-top:3px;line-height:1.3}
+.fgrid{display:grid;gap:11px;margin-top:9px}
+.fgrid.c1{grid-template-columns:1fr}
+.fgrid.c2{grid-template-columns:1fr 1fr}
+.fgrid figure{margin:0;page-break-inside:avoid}
+.fgrid img{width:100%;object-fit:contain;background:#F1F4F3;border:1px solid #B9C2BF;display:block}
+.fgrid.s1 img{height:152mm}
+.fgrid.s2 img{height:104mm}
+.fgrid.s2v img{height:148mm}
+.fgrid.s4 img{height:82mm}
+.fgrid figcaption{font-size:8.5pt;color:#4A5956;padding-top:4px;line-height:1.35}
+@media screen{
+  .fgrid.s1 img{height:520px}.fgrid.s2 img{height:360px}
+  .fgrid.s2v img{height:500px}.fgrid.s4 img{height:280px}
+}
 .cf{margin-top:14px;padding-top:7px;border-top:1px solid #B9C2BF;font-size:7.5pt;color:#55635F;line-height:1.4}
 .wm{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;
   font-size:40pt;font-weight:800;color:rgba(20,81,77,.06);transform:rotate(-28deg);letter-spacing:.06em;overflow:hidden}
@@ -1201,7 +1211,7 @@ $("fPhoto").addEventListener("change",function(e){
   var fs=Array.prototype.slice.call(e.target.files||[]);
   if(S.shots.length+fs.length>8){flash("Máximo 8 fotografías por ficha. Crea otra ficha si necesitas más.");e.target.value="";return}
   Promise.all(fs.map(function(f){return shrink(f,1400,0.7)})).then(function(imgs){
-    imgs.forEach(function(o){S.shots.push({src:o.src,nota:""})}); renderShots(); e.target.value="";
+    imgs.forEach(function(o){S.shots.push({src:o.src,nota:"",w:o.w,h:o.h})}); renderShots(); e.target.value="";
   }).catch(function(){flash("No se pudo procesar una de las imágenes.")});
 });
 function saveFicha(p,s,f,nuevo,salir){
@@ -1317,16 +1327,45 @@ function htmlCedulas(p,s){
       (x.patologia&&x.patologia.length?'<div class="blk"><h4>Patología preexistente</h4><p>'+esc(x.patologia.join(" · "))+'</p></div>':"")+
       (x.ensayos&&x.ensayos.length?'<div class="blk"><h4>Ensayos requeridos</h4><p>'+esc(x.ensayos.join(" · "))+'</p></div>':"")+
       (x.obs?'<div class="blk"><h4>Observaciones</h4><p>'+esc(x.obs)+'</p></div>':"")+
-      ((x.fotos||[]).length?'<div class="blk"><h4>Registro fotográfico</h4><div class="pgrid">'+
-        x.fotos.map(function(ph,j){return '<figure><img src="'+ph.src+'"><figcaption>Foto '+(j+1)+'. '+
-          esc(ph.nota||"Sin descripción")+'</figcaption></figure>'}).join("")+'</div></div>':"")+
+      ((x.fotos||[]).length?'<div class="blk"><h4>Registro fotográfico</h4><p>'+
+        x.fotos.length+(x.fotos.length===1?' fotografía':' fotografías')+
+        ', en la página siguiente.</p></div>':"")+
       ((x.hist&&x.hist.length)?'<div class="blk"><h4>Trazabilidad de la ficha</h4><p>'+
         x.hist.map(function(z){return esc(z.acc+": "+z.por+" · "+new Date(z.ts).toLocaleString("es-CO"))}).join("<br>")+'</p></div>':"")+
       '<div style="font-size:8pt;color:#55635F;margin-top:9px">Ficha '+(i+1)+' de '+f.length+
       (x.pin?' · localizada en el plano con el número '+x.consec:' · sin localización en plano')+'</div>'+
       pieDe(p,s)+'</div>';
+    h+=htmlFotos(p,s,x);
   });
   return h;
+}
+
+/* Registro fotográfico en páginas propias: hasta cuatro por página,
+   sin recorte, respetando la proporción original de cada toma. */
+function htmlFotos(p,s,x){
+  var fts=x.fotos||[]; if(!fts.length)return "";
+  var lotes=[]; for(var k=0;k<fts.length;k+=4) lotes.push(fts.slice(k,k+4));
+  var out="";
+  lotes.forEach(function(lote,li){
+    var n=lote.length, cls;
+    if(n===1) cls="c1 s1";
+    else if(n===2){
+      var verticales=lote.every(function(ph){return ph.h&&ph.w&&ph.h>ph.w});
+      cls = verticales ? "c2 s2v" : "c1 s2";
+    } else cls="c2 s4";
+    out+='<div class="cedula">'+(S.usuario?'<div class="wm">'+esc(S.usuario)+'</div>':'')+logosDe(p)+
+      '<div class="ch"><div class="l"><b>Registro fotográfico</b>'+esc(p.nombre)+'<br>'+esc(s.nombre)+'</div>'+
+      '<div class="r"><span class="code">'+esc(x.codigo)+'</span>'+
+      '<div style="font-size:9pt">'+esc([x.tipoEl,x.rotulo].filter(Boolean).join(" ")||"Elemento")+'</div></div></div>'+
+      '<div class="fgrid '+cls+'">'+lote.map(function(ph,j){
+        return '<figure><img src="'+ph.src+'" alt="Fotografía '+(li*4+j+1)+'">'+
+          '<figcaption><b>Foto '+(li*4+j+1)+'.</b> '+esc(ph.nota||"Sin descripción")+'</figcaption></figure>'}).join("")+
+      '</div>'+
+      (lotes.length>1?'<div style="font-size:8pt;color:#55635F;margin-top:9px">Página '+(li+1)+
+        ' de '+lotes.length+' del registro fotográfico de esta ficha.</div>':"")+
+      pieDe(p,s)+'</div>';
+  });
+  return out;
 }
 
 function resumenProyecto(p){
